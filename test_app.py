@@ -5,7 +5,7 @@ import json
 import pandas as pd
 from unittest.mock import patch, MagicMock, mock_open, call
 import tempfile
-from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
+from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data, calculate_health_score
 from modules.ai import get_ai_insights
 from modules.pdf_generator import generate_pdf
 
@@ -105,10 +105,60 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertTrue(len(top_wants) <= 5)
         os.remove(many_file)
 
+    def test_health_score_perfect_50_30_20(self):
+        """Test health score calculation for perfect 50/30/20."""
+        score = calculate_health_score(2000, 1000, 600, 400)
+        self.assertEqual(score, 100)
+
+    def test_health_score_conservative_spending(self):
+        """Test that conservative spending gets perfect score."""
+        # Under-spending is rewarded (no penalty)
+        score = calculate_health_score(2000, 800, 400, 800)
+        self.assertEqual(score, 100)
+
+    def test_health_score_under_savings(self):
+        """Test penalty for under-saving."""
+        # Savings at 10% (below 20% target)
+        score = calculate_health_score(2000, 1200, 600, 200)
+        self.assertGreater(score, 80)  # Should be penalized
+        self.assertLess(score, 100)
+
+    def test_health_score_wants_overspend(self):
+        """Test penalty for wants overspending (0.5 weight)."""
+        # Wants at 40% (above 30% target)
+        score = calculate_health_score(2000, 1000, 800, 200)
+        self.assertGreater(score, 80)
+        self.assertLess(score, 100)
+
+    def test_health_score_needs_overspend_moderate(self):
+        """Test penalty for needs overspending (0.2 weight)."""
+        # Needs at 60% (above 50% target)
+        score = calculate_health_score(2000, 1200, 600, 200)
+        self.assertGreater(score, 90)  # Should be lightly penalized
+        self.assertLess(score, 100)
+
+    def test_health_score_needs_extreme_overspend(self):
+        """Test severe penalty when needs > 75%."""
+        # Needs at 76% - triggers -10 penalty
+        score = calculate_health_score(2000, 1520, 300, 180)
+        self.assertLess(score, 80)  # Should be significantly penalized
+
+    def test_health_score_negative_savings(self):
+        """Test zero score for negative savings (debt)."""
+        score = calculate_health_score(2000, 1200, 900, -100)
+        self.assertEqual(score, 0)
+
+    def test_health_score_zero_income(self):
+        """Test zero score for zero income."""
+        score = calculate_health_score(0, 0, 0, 0)
+        self.assertEqual(score, 0)
+
     def test_ai_fallback(self):
-        # Should always return a score and advice, even if AI fails
+        """Test AI returns deterministic health score and advice."""
+        # Now uses calculate_health_score() directly (not API-dependent)
         score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
-        self.assertIsInstance(score, int)
+        # Score for perfect 50/30/20 should be 100
+        self.assertEqual(score, 100)
         self.assertIsInstance(advice, str)
 
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
@@ -162,17 +212,17 @@ class TestFinancialHealthChecker(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     def test_ai_without_api_key_uses_fallback(self):
-        """Test that AI falls back to default advice when GEMINI_API_KEY is not set."""
-        # Simulate missing API key
+        """Test that AI calculates score using our logic even without API key."""
+        # Health score is now calculated using our own logic, not dependent on API
         score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
         
-        # Should return default fallback values
-        self.assertEqual(score, 70)
-        self.assertIn("focus on reducing Wants", advice)
+        # Score should be calculated: perfect 50/30/20 = 100
+        self.assertEqual(score, 100)
+        self.assertIsInstance(advice, str)
 
     @patch('modules.ai.genai')
     def test_ai_handles_network_error(self, mock_genai):
-        """Test that AI gracefully handles network errors."""
+        """Test that AI gracefully handles network errors and still returns score."""
         # Mock a network error in Client initialization
         mock_genai.Client.side_effect = Exception("Network error")
         mock_genai.GenerativeModel.side_effect = Exception("Network error")
@@ -180,11 +230,9 @@ class TestFinancialHealthChecker(unittest.TestCase):
         # Call AI function - should not raise exception
         score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
         
-        # Verify fallback is used (score should be default fallback)
-        self.assertIsInstance(score, int)
+        # Score should be calculated from our logic (perfect 50/30/20 = 100)
+        self.assertEqual(score, 100)
         self.assertIsInstance(advice, str)
-        # Fallback score is 70, but since mocking returns error, it should use fallback
-        self.assertEqual(score, 70)
 
     def test_ai_score_parsing_from_response(self):
         """Test that AI can parse scores from various response formats."""

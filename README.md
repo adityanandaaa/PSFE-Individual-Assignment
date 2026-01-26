@@ -7,8 +7,9 @@ A Python-based application for analyzing personal finances using the 50/30/20 bu
 - **Income and Currency Input**: Enter monthly net income and select currency.
 - **Excel File Validation**: Upload and validate expense data with detailed error feedback.
 - **50/30/20 Analysis**: Automatically categorize and analyze spending against targets.
-- **AI Insights**: Get health scores and advice from Gemini AI (with fallback).
-- **PDF Reports**: Generate comprehensive reports with bar charts, pie charts, and top categories.
+- **Health Score**: Get a deterministic financial health score (0-100) based on mathematical formula, independent of AI services.
+- **AI Insights**: Get personalized financial advice from Gemini AI (with fallback).
+- **PDF Reports**: Generate comprehensive reports with bar charts, pie charts, top categories, health score, and advice.
 - **Template Download**: Download a sample Excel template for easy data entry.
 
 ## Project Structure

@@ -18,18 +18,24 @@ The uploader extracts raw values in read-only mode, ignoring formulas and flaggi
 ### 3. Core Logic & PDF Reporting
 The system focuses on data processing and professional documentation rather than on-screen visualization. The 50/30/20 calculations are performed locally using Python's pandas library, and the report generation remains functional even if the AI connection fails. The PDF report is the exclusive output and includes three charts: a bar chart comparing actual spending in Needs, Wants, and Savings against the 50/30/20 targets (with lines for targets); a pie chart showing the percentage breakdown of expenses across Needs, Wants, and Savings (distinct colors: Needs-blue, Wants-red, Savings-green; with percentages); and a bar chart highlighting the top 5 spending categories within the "Wants" bucket. Each chart section has a heading (e.g., "Spending vs Targets") and a descriptive paragraph explaining the visualization. The PDF is generated using ReportLab with Matplotlib-generated images embedded. The system is optimized to process files and generate the PDF in under 30 seconds on standard 8GB RAM hardware.
 
-### 4. Dual AI Integration: Gemini 2.0 Flash
-Two AI layers are integrated for quantitative and qualitative feedback. The system sends a structured JSON payload to the Gemini API, containing user context, income baseline, actual 50/30/20 split, top spending categories, and the overall goal. Example payload structure:
-```json
-{
-  "role": "Senior Financial Consultant specializing in 50/30/20",
-  "income": 3000,
-  "buckets": {"needs": 1500, "wants": 900, "savings": 600},
-  "top_categories": ["Dining", "Transport"],
-  "goal": "Achieve 20% savings target in UK context"
-}
-```
-Agent 1 (Health Audit) evaluates the data and assigns a financial health score from 0–100%. Agent 2 (Strategic Advice) generates actionable recommendations, such as identifying where to cut costs to meet the 20% savings target. Error handling includes network timeouts (30 seconds), invalid API key detection, rate limit retries, and fallback to generic advice if AI fails. Users can skip AI features and still generate reports.
+### 4. Health Score Calculation & AI Integration
+The health score is calculated using a deterministic mathematical formula based on the 50/30/20 framework. This ensures consistent, transparent scoring independent of external AI services.
+
+**Health Score Formula:**
+- Calculate ratios: n = N/I, w = W/I, s = S/I
+- Directional deviations (penalize only risky behavior):
+  - Dn = max(0, n - 0.5) - Needs overspend
+  - Dw = max(0, w - 0.3) - Wants overspend
+  - Ds = max(0, 0.2 - s) - Under-saving
+- Weighted score: Score = 100 × (1 - (0.2×Dn + 0.5×Dw + 0.6×Ds))
+- Risk adjustments:
+  - If savings < 0: Score = 0 (financial danger)
+  - If needs > 75%: Score -= 10 (extreme overspend)
+- Final: Score = max(0, min(100, Score))
+
+Weights prioritize wants control (0.5) and savings adequacy (0.6), with lower weight on needs (0.2). Conservative spending (under-allocation) is not penalized.
+
+The Gemini API is used only for generating personalized financial advice and recommendations, not for scoring. The AI receives a structured JSON payload with financial data and provides actionable optimization tips. If the AI connection fails, the report includes the calculated health score with fallback generic advice.
 
 ### 5. Technical Implementation Summary
 The application is implemented in Python with a modular structure for maintainability. The main entry point is `app.py`, which imports from the `modules/` directory. Key modules include:
@@ -73,9 +79,12 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - No user data is retained after the session ends.
 - The app runs offline for core features, with AI as an optional enhancement.
 
-**User Story 5: As an Individual Budgeter, I want AI to provide a health score and optimization tips so that I can improve my budgeting efficiency.**
-- AI receives a JSON payload with income, bucket totals, and top categories.
-- Agent 1 returns a score from 0-100% based on 50/30/20 alignment.
-- Agent 2 provides at least 3 actionable tips for reducing Wants spending to meet Savings targets.
-- If AI fails, the report includes a message and proceeds without advice.</content>
+**User Story 5: As an Individual Budgeter, I want to receive a financial health score and optimization tips so that I can improve my budgeting efficiency.**
+- Health score is calculated using a deterministic mathematical formula based on 50/30/20 targets.
+- Score ranges from 0-100% and penalizes only risky behaviors (overspending/under-saving).
+- Conservative spending is not penalized; underspending in any category does not reduce the score.
+- Weights: Needs 0.2, Wants 0.5, Savings 0.6 to emphasize wants control and savings adequacy.
+- Severe penalties: Savings < 0 results in score 0; Needs > 75% results in -10 penalty.
+- AI (Gemini) provides personalized optimization tips and actionable recommendations.
+- If AI fails, the report includes the calculated health score with generic fallback advice.</content>
 <parameter name="filePath">/Users/macbookairm3/new_python_project/requirements.md
