@@ -152,3 +152,67 @@ def analyze_data(df, income):
     
     # Return aggregated budget data
     return needs, wants, savings, top_wants
+
+def calculate_health_score(income, needs, wants, savings):
+    """Calculate financial health score based on 50/30/20 budgeting model.
+    
+    Uses mathematical formula to evaluate how well spending aligns with targets:
+    - Needs: 50% target (weight: 0.35)
+    - Wants: 30% target (weight: 0.15)
+    - Savings: 20% target (weight: 0.50)
+    
+    Formula:
+    Score = 100 × (1 - [0.35|n-0.5| + 0.15|w-0.3| + 0.50|s-0.2|])
+    
+    Adjustment rules applied after core calculation:
+    - If savings < 5%: Score -= 20
+    - If needs > 70%: Score -= 15
+    - If savings < 0: Score = 0
+    
+    Final score is clamped to [0, 100].
+    
+    Args:
+        income: Total monthly income
+        needs: Total needs spending
+        wants: Total wants spending
+        savings: Total savings
+        
+    Returns:
+        int: Health score from 0 to 100
+    """
+    # === CALCULATE RATIOS ===
+    # Prevent division by zero
+    if income <= 0:
+        return 0
+    
+    # Convert spending to ratios (as fractions of income)
+    n = needs / income  # Needs ratio
+    w = wants / income  # Wants ratio
+    s = savings / income  # Savings ratio
+    
+    # === CORE SCORE CALCULATION ===
+    # Calculate weighted deviation from targets
+    # Needs target: 0.5, Wants target: 0.3, Savings target: 0.2
+    deviation = 0.35 * abs(n - 0.5) + 0.15 * abs(w - 0.3) + 0.50 * abs(s - 0.2)
+    
+    # Convert deviation to score (0-100)
+    score = 100 * (1 - deviation)
+    
+    # === ADJUSTMENT RULES ===
+    # Penalize insufficient savings (< 5%)
+    if s < 0.05:
+        score -= 20
+    
+    # Penalize excessive needs spending (> 70%)
+    if n > 0.70:
+        score -= 15
+    
+    # Severe penalty: negative savings means debt or overspending
+    if savings < 0:
+        score = 0
+    
+    # === FINAL CONSTRAINT ===
+    # Clamp score to valid range [0, 100]
+    score = max(0, min(100, score))
+    
+    return int(score)

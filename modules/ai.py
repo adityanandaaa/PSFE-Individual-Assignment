@@ -1,14 +1,14 @@
 """AI integration wrapper.
 
-This module attempts to use `google.genai` if available, falling back to the
-deprecated `google.generativeai` package. All external calls are wrapped so
-failures return a safe fallback response for offline/testing environments.
+This module provides financial advice using the Gemini API.
+Health score is calculated using our own 50/30/20 logic formula.
 """
 
 import json
 import logging
 import re
 import os
+from modules.logic import calculate_health_score
 
 # Prefer the newer package if present.
 try:
@@ -24,9 +24,10 @@ except Exception:
 
 
 def get_ai_insights(income, needs, wants, savings, top_wants):
-    """Get AI insights with safe fallback.
+    """Get AI advice with health score from our own logic.
     
-    Calls the Gemini API to analyze financial data and provide personalized advice.
+    Uses our mathematical 50/30/20 formula to calculate health score.
+    Calls Gemini API only for personalized financial advice.
     If API is unavailable, returns sensible fallback recommendations.
 
     Args:
@@ -39,31 +40,38 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
     Returns:
         tuple: (score: int [0-100], advice: str with recommendations)
     """
-    # === FALLBACK VALUES ===
+    # === CALCULATE HEALTH SCORE USING OUR LOGIC ===
+    # This is deterministic and doesn't depend on API availability
+    score = calculate_health_score(income, needs, wants, savings)
+    
+    # === FALLBACK ADVICE ===
     # Used when API is unavailable or fails
-    fallback_score = 70
     fallback_advice = (
-        "Based on your data, focus on reducing Wants to increase Savings. "
-        "Consider budgeting apps for tracking."
+        "Based on your 50/30/20 analysis:\n"
+        f"Needs: {needs/income*100:.1f}% (target: 50%)\n"
+        f"Wants: {wants/income*100:.1f}% (target: 30%)\n"
+        f"Savings: {savings/income*100:.1f}% (target: 20%)\n\n"
+        "Focus on aligning your spending with these targets to improve your financial health."
     )
 
     # Check if any Google GenAI package is available
     if genai is None:
         logging.warning("No Google GenAI package available; using fallback advice.")
-        return fallback_score, fallback_advice
+        return score, fallback_advice
 
     try:
-        # === BUILD ANALYSIS PROMPT ===
+        # === BUILD ADVICE PROMPT ===
         # Create a structured payload with financial data for AI analysis
         prompt_payload = {
             "role": "Senior Financial Consultant specializing in 50/30/20",
             "income": income,
             "buckets": {"needs": needs, "wants": wants, "savings": savings},
             "top_categories": top_wants,
-            "goal": "Achieve 20% savings target"
+            "goal": "Achieve 20% savings target",
+            "calculated_score": score
         }
-        # Format prompt for the API
-        prompt = f"Analyze this financial data: {json.dumps(prompt_payload)}. Provide a health score 0-100 and 3 actionable tips."
+        # Format prompt for the API - ask for advice only, not score
+        prompt = f"I have a financial health score of {score}/100 based on this data: {json.dumps(prompt_payload)}. Provide 3 specific, actionable tips to improve my financial health and reach my savings goal."
 
         # === ATTEMPT MODERN GENAI CLIENT ===
         if GENAI_PKG == 'genai':
@@ -120,23 +128,12 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
             response = model.generate_content(prompt)
             text = getattr(response, 'text', str(response))
 
-        # === PARSE RESPONSE ===
-        # Extract health score from AI response using regex
-        lines = text.split('\n')
-        score = 75  # Default score if parsing fails
-        for line in lines:
-            # Look for score/health keywords in response
-            if 'score' in line.lower() or 'health' in line.lower():
-                # Extract first number found in the line
-                nums = re.findall(r'\d+', line)
-                if nums:
-                    score = int(nums[0])
-                    break
-        # Use full response as advice
+        # === USE AI RESPONSE AS ADVICE ===
+        # Return our calculated score with AI-generated advice
         advice = text
         return score, advice
 
     except Exception as e:
-        # Log error and return fallback values
+        # Log error and return score with fallback advice
         logging.error(f"AI error: {str(e)}")
-        return fallback_score, fallback_advice
+        return score, fallback_advice

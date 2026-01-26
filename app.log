@@ -844,3 +844,13 @@ violations {
 2026-01-26 19:20:16,182 - INFO - File validated successfully.
 2026-01-26 19:20:18,392 - ERROR - AI error: 403 Your API key was reported as leaked. Please use another API key.
 2026-01-26 19:20:19,642 - INFO - PDF generated: /Users/macbookairm3/Downloads/financial_report.pdf
+2026-01-26 19:23:31,673 - INFO - Template downloaded to: /Users/macbookairm3/Downloads/Finance Check 50_30_20 Templates_20260126_192330.xlsx
+2026-01-26 19:23:35,955 - INFO - Template downloaded to: /Users/macbookairm3/Downloads/Finance Check 50_30_20 Templates_20260126_192334.xlsx
+2026-01-26 19:23:43,696 - INFO - File uploaded: /Users/macbookairm3/Downloads/Finance Check 50_30_20 Templates_20260126_192334.xlsx
+2026-01-26 19:23:43,705 - INFO - File validated successfully.
+2026-01-26 19:23:45,947 - ERROR - AI error: 403 Your API key was reported as leaked. Please use another API key.
+2026-01-26 19:23:47,339 - INFO - PDF generated: /Users/macbookairm3/Downloads/financial_report_20260126_192345.pdf
+2026-01-26 19:23:50,841 - INFO - File uploaded: /Users/macbookairm3/Downloads/Finance Check 50_30_20 Templates_20260126_192330.xlsx
+2026-01-26 19:23:50,846 - INFO - File validated successfully.
+2026-01-26 19:23:52,711 - ERROR - AI error: 403 Your API key was reported as leaked. Please use another API key.
+2026-01-26 19:23:54,008 - INFO - PDF generated: /Users/macbookairm3/Downloads/financial_report_20260126_192352.pdf
