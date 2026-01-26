@@ -9,7 +9,7 @@ load_dotenv()
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
 from modules.pdf_generator import generate_pdf
-from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, PDF_FILE
+from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, get_pdf_filename, get_template_filename
 
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -92,9 +92,11 @@ class FinancialHealthChecker:
             'Category': ['Rent', 'Eating Out', 'Gold Investment', 'Electricity', 'Eating Out', 'Bus Pass', 'Groceries', 'Eating Out', 'Stocks', 'Sports']
         }
         df = pd.DataFrame(data)
-        template_path = os.path.join(DOWNLOADS_PATH, TEMPLATE_FILE)
+        # Use timestamp-based filename to allow multiple downloads
+        template_filename = get_template_filename()
+        template_path = os.path.join(DOWNLOADS_PATH, template_filename)
         df.to_excel(template_path, index=False)
-        messagebox.showinfo("Template Downloaded", f"Template saved to {template_path}")
+        messagebox.showinfo("Template Downloaded", f"Template saved: {template_filename}")
         self.log_feedback(f"Template downloaded to: {template_path}")
 
     def upload_file(self):
@@ -124,10 +126,11 @@ class FinancialHealthChecker:
         # AI
         score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
 
-        # Generate PDF
-        pdf_path = os.path.join(DOWNLOADS_PATH, PDF_FILE)
+        # Generate PDF with unique timestamp-based filename
+        pdf_filename = get_pdf_filename()
+        pdf_path = os.path.join(DOWNLOADS_PATH, pdf_filename)
         generate_pdf(pdf_path, income, symbol, needs, wants, savings, top_wants, score, advice)
-        messagebox.showinfo("Success", f"PDF generated: {pdf_path}")
+        messagebox.showinfo("Success", f"PDF generated: {pdf_filename}")
         self.log_feedback(f"PDF generated: {pdf_path}")
 
     # Note: AI integration is handled by `modules.ai.get_ai_insights`.
