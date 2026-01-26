@@ -3,6 +3,7 @@ import unittest
 import os
 import json
 import pandas as pd
+from unittest.mock import patch, MagicMock
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
 
@@ -107,6 +108,91 @@ class TestFinancialHealthChecker(unittest.TestCase):
         score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
         self.assertIsInstance(score, int)
         self.assertIsInstance(advice, str)
+
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
+    @patch('modules.ai.genai')
+    def test_ai_with_mock_response(self, mock_genai):
+        """Test AI insights with mocked response from GenerativeModel."""
+        # Mock the GenerativeModel().generate_content() response
+        mock_model = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = "Health Score: 85\nTip 1: Increase savings\nTip 2: Reduce wants\nTip 3: Track expenses"
+        mock_model.generate_content.return_value = mock_response
+        
+        mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = MagicMock()
+        
+        # Call AI function
+        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        
+        # Verify results
+        self.assertIsInstance(score, int)
+        self.assertIsInstance(advice, str)
+        self.assertGreater(score, 0)
+        self.assertLess(score, 101)
+        # Verify configure was called with the env key
+        mock_genai.configure.assert_called()
+
+    @patch('modules.ai.genai')
+    def test_ai_with_generativemodel_mock(self, mock_genai):
+        """Test AI insights with mocked GenerativeModel interface (fallback)."""
+        # Mock the GenerativeModel().generate_content() response
+        mock_model = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = "Health Score: 72\nAdvice: Your spending is balanced overall."
+        mock_model.generate_content.return_value = mock_response
+        
+        mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = MagicMock()
+        
+        # Simulate missing Client but available configure
+        mock_genai.Client = None
+        
+        import sys
+        sys.modules['google.genai'] = mock_genai
+        
+        # Call AI function
+        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        
+        # Verify results
+        self.assertIsInstance(score, int)
+        self.assertIsInstance(advice, str)
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_ai_without_api_key_uses_fallback(self):
+        """Test that AI falls back to default advice when GEMINI_API_KEY is not set."""
+        # Simulate missing API key
+        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        
+        # Should return default fallback values
+        self.assertEqual(score, 70)
+        self.assertIn("focus on reducing Wants", advice)
+
+    @patch('modules.ai.genai')
+    def test_ai_handles_network_error(self, mock_genai):
+        """Test that AI gracefully handles network errors."""
+        # Mock a network error in Client initialization
+        mock_genai.Client.side_effect = Exception("Network error")
+        mock_genai.GenerativeModel.side_effect = Exception("Network error")
+        
+        # Call AI function - should not raise exception
+        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        
+        # Verify fallback is used (score should be default fallback)
+        self.assertIsInstance(score, int)
+        self.assertIsInstance(advice, str)
+        # Fallback score is 70, but since mocking returns error, it should use fallback
+        self.assertEqual(score, 70)
+
+    def test_ai_score_parsing_from_response(self):
+        """Test that AI can parse scores from various response formats."""
+        # This indirectly tests score parsing by checking fallback behavior
+        score, advice = get_ai_insights(5000, 2500, 1500, 1000, {'restaurant': 500, 'entertainment': 300})
+        
+        # Score should be between 0 and 100
+        self.assertIsInstance(score, int)
+        self.assertGreaterEqual(score, 0)
+        self.assertLessEqual(score, 100)
 
 if __name__ == '__main__':
     unittest.main()

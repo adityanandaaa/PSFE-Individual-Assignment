@@ -5,6 +5,6 @@ PyInstaller.__main__.run([
     'app.py',
     '--onefile',
     '--windowed',
-    '--add-data', 'currencies.json:.',
+    '--add-data', 'data/currencies.json:data',
     '--name', 'FinancialHealthChecker'
 ])
