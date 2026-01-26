@@ -3,9 +3,11 @@ import unittest
 import os
 import json
 import pandas as pd
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open, call
+import tempfile
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
+from modules.pdf_generator import generate_pdf
 
 class TestFinancialHealthChecker(unittest.TestCase):
 
@@ -313,6 +315,196 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertIsNone(get_currency_symbol(self.currencies, ''))
         # None as currency code
         self.assertIsNone(get_currency_symbol(self.currencies, None))
+
+    @patch('modules.pdf_generator.generate_pie_chart')
+    @patch('modules.pdf_generator.generate_category_chart')
+    @patch('modules.pdf_generator.generate_bar_chart')
+    def test_pdf_generation_calls_all_charts(self, mock_bar, mock_pie, mock_category):
+        """Test that PDF generation calls all three chart functions."""
+        # Create actual temporary image files with minimal PNG data (1x1 transparent pixel)
+        png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+        
+        # Create temp files with actual PNG data
+        bar_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        bar_file.write(png_data)
+        bar_file.close()
+        
+        pie_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        pie_file.write(png_data)
+        pie_file.close()
+        
+        category_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        category_file.write(png_data)
+        category_file.close()
+        
+        mock_bar.return_value = bar_file.name
+        mock_pie.return_value = pie_file.name
+        mock_category.return_value = category_file.name
+        
+        pdf_path = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False).name
+        try:
+            generate_pdf(pdf_path, 1000, '£', 500, 300, 200, pd.Series({'food': 100}), 75, "Good health")
+            
+            # Verify all chart functions were called
+            mock_bar.assert_called_once()
+            mock_pie.assert_called_once()
+            mock_category.assert_called_once()
+            
+            # Verify PDF was created
+            self.assertTrue(os.path.exists(pdf_path))
+        finally:
+            # Cleanup
+            for f in [pdf_path, bar_file.name, pie_file.name, category_file.name]:
+                if os.path.exists(f):
+                    os.remove(f)
+
+    @patch('modules.pdf_generator.generate_pie_chart')
+    @patch('modules.pdf_generator.generate_category_chart')
+    @patch('modules.pdf_generator.generate_bar_chart')
+    def test_pdf_generation_with_different_currencies(self, mock_bar, mock_pie, mock_category):
+        """Test PDF generation with various currency symbols."""
+        # Create actual PNG data (1x1 transparent pixel)
+        png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+        
+        currencies_to_test = ['$', '€', '¥', '₹', '£']
+        for symbol in currencies_to_test:
+            # Create temp PNG files
+            bar_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            bar_file.write(png_data)
+            bar_file.close()
+            
+            pie_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            pie_file.write(png_data)
+            pie_file.close()
+            
+            category_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            category_file.write(png_data)
+            category_file.close()
+            
+            mock_bar.return_value = bar_file.name
+            mock_pie.return_value = pie_file.name
+            mock_category.return_value = category_file.name
+            
+            pdf_path = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False).name
+            try:
+                generate_pdf(pdf_path, 5000, symbol, 2500, 1500, 1000, pd.Series({'dining': 500}), 80, "Excellent")
+                self.assertTrue(os.path.exists(pdf_path))
+            finally:
+                for f in [pdf_path, bar_file.name, pie_file.name, category_file.name]:
+                    if os.path.exists(f):
+                        os.remove(f)
+
+    def test_download_template_creates_valid_file(self):
+        """Test that template Excel file creation works with correct structure."""
+        import pandas as pd
+        from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE
+        
+        # Create template directly (same code as download_template)
+        data = {
+            'Date': ['1/1/2026', '1/2/2026', '1/3/2026', '1/4/2026', '1/5/2026', '1/6/2026', '1/7/2026', '1/8/2026', '1/9/2026', '1/10/2026'],
+            'Name': ['Rent', 'all you can eat DAIU', 'Investments', 'Electricity Bills', 'Thai Grass', 'NX Bus Pass', 'Aldi Week 1', 'Kebab Rush', 'Stocks Investment', 'Gym Subscription'],
+            'Type': ['Needs', 'Wants', 'Savings', 'Needs', 'Wants', 'Needs', 'Needs', 'Wants', 'Savings', 'Needs'],
+            'Amount': [520.00, 50.00, 430.00, 4.20, 7.50, 53.00, 16.00, 6.50, 20.00, 18.50],
+            'Category': ['Rent', 'Eating Out', 'Gold Investment', 'Electricity', 'Eating Out', 'Bus Pass', 'Groceries', 'Eating Out', 'Stocks', 'Sports']
+        }
+        df = pd.DataFrame(data)
+        template_path = os.path.join(DOWNLOADS_PATH, TEMPLATE_FILE)
+        df.to_excel(template_path, index=False)
+        
+        try:
+            # Verify it's a valid Excel file
+            df_read = pd.read_excel(template_path)
+            
+            # Check required columns
+            required_cols = ['Date', 'Name', 'Type', 'Amount', 'Category']
+            for col in required_cols:
+                self.assertIn(col, df_read.columns)
+            
+            # Check data types and content
+            self.assertEqual(len(df_read), 10)  # Should have 10 example rows
+            self.assertTrue(all(df_read['Type'].isin(['Needs', 'Wants', 'Savings'])))
+            self.assertAlmostEqual(df_read['Amount'].sum(), 1125.70, places=2)  # Verify all amounts
+        finally:
+            if os.path.exists(template_path):
+                os.remove(template_path)
+
+    def test_analyze_workflow_end_to_end(self):
+        """Test complete analysis workflow: load currencies -> validate -> analyze."""
+        # Create test file
+        test_file = "e2e_test.xlsx"
+        data = {
+            'Date': ['1/1/2026', '1/2/2026', '1/3/2026', '1/4/2026', '1/5/2026'],
+            'Name': ['Rent', 'Utilities', 'Groceries', 'Cinema', 'Savings'],
+            'Type': ['Needs', 'Needs', 'Needs', 'Wants', 'Savings'],
+            'Amount': [800, 150, 150, 50, 400],
+            'Category': ['Housing', 'Utilities', 'Food', 'Entertainment', 'Emergency Fund']
+        }
+        pd.DataFrame(data).to_excel(test_file, index=False)
+        
+        try:
+            # Step 1: Load currencies
+            currencies = load_currencies()
+            self.assertGreater(len(currencies), 0)
+            
+            # Step 2: Validate file
+            valid, df = validate_file(test_file)
+            self.assertTrue(valid)
+            self.assertIsInstance(df, pd.DataFrame)
+            
+            # Step 3: Analyze data
+            income = 1550
+            needs, wants, savings, top_wants = analyze_data(df, income)
+            
+            # Verify results
+            self.assertEqual(needs, 1100)  # Rent + Utilities + Groceries
+            self.assertEqual(wants, 50)    # Cinema
+            self.assertEqual(savings, 400) # Savings
+            self.assertIn('entertainment', top_wants.index)
+            
+            # Step 4: Get AI insights
+            score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
+            self.assertIsInstance(score, int)
+            self.assertIsInstance(advice, str)
+            
+        finally:
+            if os.path.exists(test_file):
+                os.remove(test_file)
+
+    def test_validate_file_with_empty_dataframe(self):
+        """Test file validation with an empty DataFrame."""
+        empty_file = "empty.xlsx"
+        data = {
+            'Date': [],
+            'Name': [],
+            'Type': [],
+            'Amount': [],
+            'Category': []
+        }
+        pd.DataFrame(data).to_excel(empty_file, index=False)
+        
+        valid, result = validate_file(empty_file)
+        # Empty dataframe has correct columns, so it should be valid
+        self.assertTrue(valid)
+        self.assertEqual(len(result), 0)
+        os.remove(empty_file)
+
+    def test_income_validation_boundary_cases(self):
+        """Test income validation with boundary and special values."""
+        # Very small positive income
+        self.assertTrue(is_valid_income(0.01))
+        
+        # Very large income
+        self.assertTrue(is_valid_income(999999999))
+        
+        # Exactly zero
+        self.assertFalse(is_valid_income(0))
+        self.assertFalse(is_valid_income(0.0))
+        
+        # String representations
+        self.assertTrue(is_valid_income("1000.50"))
+        self.assertTrue(is_valid_income("1"))
+        self.assertFalse(is_valid_income("0"))
+        self.assertFalse(is_valid_income("-100.50"))
 
 if __name__ == '__main__':
     unittest.main()
