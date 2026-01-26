@@ -5,7 +5,7 @@ import logging
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
 from modules.pdf_generator import generate_pdf
-from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, PDF_FILE
+from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, get_pdf_filename
 
 class FinancialHealthChecker:
     """Main GUI application for financial health analysis using 50/30/20 budgeting.
@@ -188,12 +188,13 @@ class FinancialHealthChecker:
         score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
 
         # === REPORT GENERATION ===
-        # Create and save PDF report
-        pdf_path = os.path.join(DOWNLOADS_PATH, PDF_FILE)
+        # Create and save PDF report with unique timestamp-based filename to avoid collisions
+        pdf_filename = get_pdf_filename()
+        pdf_path = os.path.join(DOWNLOADS_PATH, pdf_filename)
         generate_pdf(pdf_path, income, symbol, needs, wants, savings, top_wants, score, advice)
         
-        # Notify user of successful report generation
-        messagebox.showinfo("Success", f"PDF generated: {pdf_path}")
+        # Notify user of successful report generation with filename
+        messagebox.showinfo("Success", f"PDF generated: {pdf_filename}")
         self.log_feedback(f"PDF generated: {pdf_path}")
 
     def log_feedback(self, message):
