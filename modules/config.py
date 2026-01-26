@@ -29,6 +29,18 @@ def get_pdf_filename():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return f'financial_report_{timestamp}.pdf'
 
+def get_template_filename():
+    """Generate unique template filename with timestamp to avoid collisions.
+    
+    Creates filenames like: Finance Check 50_30_20 Templates_20260126_143022.xlsx
+    This allows users to download multiple template copies without overwriting.
+    
+    Returns:
+        str: Unique template filename with timestamp
+    """
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    return f'Finance Check 50_30_20 Templates_{timestamp}.xlsx'
+
 # === CHART VISUALIZATION SETTINGS ===
 # Standard chart dimensions for PDF embedding
 CHART_WIDTH = 400

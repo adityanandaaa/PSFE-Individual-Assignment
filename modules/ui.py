@@ -5,7 +5,7 @@ import logging
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
 from modules.pdf_generator import generate_pdf
-from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, get_pdf_filename
+from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE, get_pdf_filename, get_template_filename
 
 class FinancialHealthChecker:
     """Main GUI application for financial health analysis using 50/30/20 budgeting.
@@ -106,6 +106,7 @@ class FinancialHealthChecker:
         
         Creates an example spreadsheet showing the correct format for
         financial data with sample entries demonstrating 50/30/20 allocation.
+        Uses unique timestamp-based filename to allow multiple downloads.
         """
         import pandas as pd
         
@@ -120,12 +121,13 @@ class FinancialHealthChecker:
         }
         df = pd.DataFrame(data)
         
-        # Save to user's Downloads folder
-        template_path = os.path.join(DOWNLOADS_PATH, TEMPLATE_FILE)
+        # Save to user's Downloads folder with unique timestamp-based filename
+        template_filename = get_template_filename()
+        template_path = os.path.join(DOWNLOADS_PATH, template_filename)
         df.to_excel(template_path, index=False)
         
-        # Notify user
-        messagebox.showinfo("Template Downloaded", f"Template saved to {template_path}")
+        # Notify user with the actual filename
+        messagebox.showinfo("Template Downloaded", f"Template saved: {template_filename}")
         self.log_feedback(f"Template downloaded to: {template_path}")
 
     def upload_file(self):
