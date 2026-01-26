@@ -41,7 +41,23 @@ def validate_file(file_path):
     """
     try:
         # Load Excel file using openpyxl engine for better compatibility
-        df = pd.read_excel(file_path, engine='openpyxl')
+        # Use context manager to ensure file is properly closed after reading
+        from openpyxl import load_workbook
+        wb = load_workbook(file_path)
+        ws = wb.active
+        
+        # Read data into DataFrame from worksheet
+        data = []
+        headers = []
+        for i, row in enumerate(ws.iter_rows(values_only=True)):
+            if i == 0:
+                headers = row
+            else:
+                data.append(row)
+        
+        df = pd.DataFrame(data, columns=headers)
+        wb.close()  # Explicitly close the workbook to release file lock
+        
         errors = []
         
         # Define required column names for the financial tracker
