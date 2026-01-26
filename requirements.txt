@@ -1,0 +1,6 @@
+pandas
+openpyxl
+matplotlib
+reportlab
+google-generativeai
+pytest
