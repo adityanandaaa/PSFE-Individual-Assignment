@@ -154,20 +154,22 @@ def analyze_data(df, income):
     return needs, wants, savings, top_wants
 
 def calculate_health_score(income, needs, wants, savings):
-    """Calculate financial health score based on 50/30/20 budgeting model.
+    """Calculate monthly budget health score based on 50/30/20 budgeting model.
     
-    Uses mathematical formula to evaluate how well spending aligns with targets:
-    - Needs: 50% target (weight: 0.35)
-    - Wants: 30% target (weight: 0.15)
-    - Savings: 20% target (weight: 0.50)
+    Uses directional deviation logic to penalize only risky behaviors:
+    - Needs overspend (> 50%) - small penalty
+    - Wants overspend (> 30%) - heavier penalty
+    - Under-saving (< 20%) - heaviest penalty
     
-    Formula:
-    Score = 100 × (1 - [0.35|n-0.5| + 0.15|w-0.3| + 0.50|s-0.2|])
+    Weighted deviations:
+    Dn = max(0, n - 0.5)      # Needs overspend
+    Dw = max(0, w - 0.3)      # Wants overspend
+    Ds = max(0, 0.2 - s)      # Under-saving
+    Score = 100 × (1 - (0.2×Dn + 0.5×Dw + 0.6×Ds))
     
-    Adjustment rules applied after core calculation:
-    - If savings < 5%: Score -= 20
-    - If needs > 70%: Score -= 15
-    - If savings < 0: Score = 0
+    Hard risk rules:
+    - If savings < 0: Score = 0 (financial danger - debt/overspend)
+    - If needs > 75%: Score -= 10 (extreme overspend)
     
     Final score is clamped to [0, 100].
     
@@ -180,39 +182,37 @@ def calculate_health_score(income, needs, wants, savings):
     Returns:
         int: Health score from 0 to 100
     """
-    # === CALCULATE RATIOS ===
+    # === STEP 1: CALCULATE RATIOS ===
     # Prevent division by zero
     if income <= 0:
         return 0
     
     # Convert spending to ratios (as fractions of income)
-    n = needs / income  # Needs ratio
-    w = wants / income  # Wants ratio
-    s = savings / income  # Savings ratio
+    n = needs / income      # Needs ratio
+    w = wants / income      # Wants ratio
+    s = savings / income    # Savings ratio
     
-    # === CORE SCORE CALCULATION ===
-    # Calculate weighted deviation from targets
-    # Needs target: 0.5, Wants target: 0.3, Savings target: 0.2
-    deviation = 0.35 * abs(n - 0.5) + 0.15 * abs(w - 0.3) + 0.50 * abs(s - 0.2)
+    # === STEP 2: DIRECTIONAL DEVIATIONS (only penalize risk) ===
+    # Only measure overspend/under-save, not underspend/over-save
+    Dn = max(0, n - 0.5)      # Needs overspend (penalty only if > 50%)
+    Dw = max(0, w - 0.3)      # Wants overspend (penalty only if > 30%)
+    Ds = max(0, 0.2 - s)      # Under-saving (penalty only if < 20%)
     
-    # Convert deviation to score (0-100)
-    score = 100 * (1 - deviation)
+    # === STEP 3: WEIGHTED SCORE CALCULATION ===
+    # Weights: Needs 0.2, Wants 0.5, Savings 0.6
+    # Higher weights on Wants and Savings reflect their importance to financial health
+    score = 100 * (1 - (0.2 * Dn + 0.5 * Dw + 0.6 * Ds))
     
-    # === ADJUSTMENT RULES ===
-    # Penalize insufficient savings (< 5%)
-    if s < 0.05:
-        score -= 20
-    
-    # Penalize excessive needs spending (> 70%)
-    if n > 0.70:
-        score -= 15
-    
+    # === STEP 4: HARD MONTHLY RISK RULES ===
     # Severe penalty: negative savings means debt or overspending
     if savings < 0:
         score = 0
     
-    # === FINAL CONSTRAINT ===
-    # Clamp score to valid range [0, 100]
+    # Penalize extreme needs overspend (> 75%)
+    if n > 0.75:
+        score -= 10
+    
+    # === STEP 5: CLAMP TO 0–100 ===
     score = max(0, min(100, score))
     
     return int(score)
