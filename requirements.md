@@ -51,9 +51,9 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 
 - **As an Individual Budgeter**, I want to enter my monthly net income and select my currency so that the analysis reflects my financial context accurately.
 - **As an Individual Budgeter**, I want to upload an Excel file of my expenses and receive validation feedback so that I can correct errors before analysis.
-- **As an Individual Budgeter**, I want the app to calculate my spending against the 50/30/20 framework and generate a PDF report with charts and AI advice so that I can understand my financial health and make informed decisions.
+- **As an Individual Budgeter**, I want the app to calculate my spending against the 50/30/20 framework and generate a PDF report with charts, a deterministic health score, and AI advice so that I can understand my financial health and make informed decisions.
 - **As an Individual Budgeter**, I want the app to process data locally without storing it externally so that my privacy is protected.
-- **As an Individual Budgeter**, I want AI to provide a health score and optimization tips so that I can improve my budgeting efficiency.
+- **As an Individual Budgeter**, I want a transparent, mathematical health score (not dependent on external AI) along with personalized AI optimization tips so that I can understand why I received my score and how to improve.
 
 ## Acceptance Criteria
 
@@ -61,6 +61,7 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - The income input field accepts only positive numeric values greater than zero and rejects negatives or non-numeric input.
 - The currency dropdown defaults to GBP and includes options for USD, EUR, IDR, and others from the currencies.json file.
 - The selected currency symbol is displayed in the PDF report alongside amounts.
+- Real-time validation feedback shows green for valid income and red for invalid input.
 
 **User Story 2: As an Individual Budgeter, I want to upload an Excel file of my expenses and receive validation feedback so that I can correct errors before analysis.**
 - The upload accepts only .xlsx files under 10 MB with up to 500 rows.
@@ -68,23 +69,24 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - Feedback terminal displays specific error messages, and the Analyze button remains disabled until all validations pass with no errors.
 - Upon any validation failure, a "Re-upload File" button is enabled, and a "Download Template" call-to-action is displayed to guide users in correcting and re-uploading the file.
 
-**User Story 3: As an Individual Budgeter, I want the app to calculate my spending against the 50/30/20 framework and generate a PDF report with charts and AI advice so that I can understand my financial health and make informed decisions.**
+**User Story 3: As an Individual Budgeter, I want the app to calculate my spending against the 50/30/20 framework and generate a PDF report with charts, health score, and advice so that I can understand my financial health and make informed decisions.**
 - Calculations aggregate expenses into Needs (50%), Wants (30%), and Savings (20%) buckets based on income, and identify the top 5 Wants categories.
 - PDF includes three charts: a bar chart with actual spending and target lines, a pie chart with percentages, and a bar chart of top Wants categories, each with headings and descriptions.
-- Report generation completes in under 30 seconds and includes AI score and advice, with fallback text if AI fails.
-- PDF is saved to the user's Downloads folder.
+- PDF displays the calculated health score (0-100) prominently with explanation of what the score means.
+- Report generation completes in under 30 seconds and includes AI-generated personalized advice.
+- PDF is saved to the user's Downloads folder with a unique timestamp-based filename.
 
 **User Story 4: As an Individual Budgeter, I want the app to process data locally without storing it externally so that my privacy is protected.**
 - All data processing occurs in memory without writing to disk or external servers.
 - No user data is retained after the session ends.
-- The app runs offline for core features, with AI as an optional enhancement.
+- The app runs completely offline for health score calculation and core features.
+- AI integration is optional; core functionality works without Gemini API connection.
 
-**User Story 5: As an Individual Budgeter, I want to receive a financial health score and optimization tips so that I can improve my budgeting efficiency.**
-- Health score is calculated using a deterministic mathematical formula based on 50/30/20 targets.
-- Score ranges from 0-100% and penalizes only risky behaviors (overspending/under-saving).
-- Conservative spending is not penalized; underspending in any category does not reduce the score.
-- Weights: Needs 0.2, Wants 0.5, Savings 0.6 to emphasize wants control and savings adequacy.
-- Severe penalties: Savings < 0 results in score 0; Needs > 75% results in -10 penalty.
-- AI (Gemini) provides personalized optimization tips and actionable recommendations.
-- If AI fails, the report includes the calculated health score with generic fallback advice.</content>
+**User Story 5: As an Individual Budgeter, I want a transparent, mathematical health score along with personalized AI optimization tips so that I can understand why I received my score and how to improve.**
+- Health score is calculated using a deterministic mathematical formula independent of AI services.
+- Score ranges from 0-100 and penalizes only risky behaviors: needs overspend (weight 0.2), wants overspend (weight 0.5), and under-saving (weight 0.6).
+- Conservative spending (underspending in any category) is not penalized; perfect score is still 100 even with lower spending.
+- Severe penalties apply: Savings < 0 results in score 0 (financial danger); Needs > 75% results in -10 penalty.
+- AI (Gemini) provides personalized optimization tips for reducing wants and increasing savings to reach financial goals.
+- If AI fails, the report includes the calculated health score with generic fallback advice based on the 50/30/20 analysis.</content>
 <parameter name="filePath">/Users/macbookairm3/new_python_project/requirements.md
