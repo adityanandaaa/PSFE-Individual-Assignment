@@ -194,5 +194,125 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertGreaterEqual(score, 0)
         self.assertLessEqual(score, 100)
 
+    def test_validate_file_invalid_name(self):
+        """Test file validation with invalid names."""
+        bad_file = "invalid_name.xlsx"
+        data = {
+            'Date': ['1/1/2026'],
+            'Name': [''],  # Empty name
+            'Type': ['Needs'],
+            'Amount': [100.00],
+            'Category': ['Rent']
+        }
+        pd.DataFrame(data).to_excel(bad_file, index=False)
+        valid, errors = validate_file(bad_file)
+        self.assertFalse(valid)
+        self.assertTrue(any('Invalid name' in e for e in errors))
+        os.remove(bad_file)
+
+    def test_validate_file_invalid_date_format(self):
+        """Test file validation with invalid date format."""
+        bad_file = "invalid_date.xlsx"
+        data = {
+            'Date': ['2026-01-01'],  # Wrong format, should be dd/mm/yyyy
+            'Name': ['Rent'],
+            'Type': ['Needs'],
+            'Amount': [1000.00],
+            'Category': ['Rent']
+        }
+        pd.DataFrame(data).to_excel(bad_file, index=False)
+        valid, errors = validate_file(bad_file)
+        self.assertFalse(valid)
+        self.assertTrue(any('Invalid date format' in e for e in errors))
+        os.remove(bad_file)
+
+    def test_validate_file_invalid_category(self):
+        """Test file validation with invalid category (empty)."""
+        bad_file = "invalid_category.xlsx"
+        data = {
+            'Date': ['1/1/2026'],
+            'Name': ['Rent'],
+            'Type': ['Needs'],
+            'Amount': [1000.00],
+            'Category': [None]  # Empty category
+        }
+        pd.DataFrame(data).to_excel(bad_file, index=False)
+        valid, errors = validate_file(bad_file)
+        self.assertFalse(valid)
+        self.assertTrue(any('Invalid category' in e for e in errors))
+        os.remove(bad_file)
+
+    def test_analyze_data_with_mixed_types(self):
+        """Test analyze_data with all three spending types (Needs, Wants, Savings)."""
+        mixed_file = "mixed_types.xlsx"
+        data = {
+            'Date': ['1/1/2026', '1/2/2026', '1/3/2026'],
+            'Name': ['Rent', 'Movie', 'Investment'],
+            'Type': ['Needs', 'Wants', 'Savings'],
+            'Amount': [1000, 200, 500],
+            'Category': ['Rent', 'Entertainment', 'Stocks']
+        }
+        pd.DataFrame(data).to_excel(mixed_file, index=False)
+        valid, df = validate_file(mixed_file)
+        self.assertTrue(valid)
+        needs, wants, savings, top_wants = analyze_data(df, 1700)
+        self.assertEqual(needs, 1000)
+        self.assertEqual(wants, 200)
+        self.assertEqual(savings, 500)
+        os.remove(mixed_file)
+
+    def test_analyze_data_category_lowercasing(self):
+        """Test that analyze_data correctly lowercases categories."""
+        case_file = "case_sensitive.xlsx"
+        data = {
+            'Date': ['1/1/2026', '1/2/2026'],
+            'Name': ['Movie1', 'Movie2'],
+            'Type': ['Wants', 'Wants'],
+            'Amount': [50, 75],
+            'Category': ['Entertainment', 'ENTERTAINMENT']  # Different cases
+        }
+        pd.DataFrame(data).to_excel(case_file, index=False)
+        valid, df = validate_file(case_file)
+        self.assertTrue(valid)
+        needs, wants, savings, top_wants = analyze_data(df, 200)
+        # Both should be combined as 'entertainment' (lowercase)
+        self.assertEqual(len(top_wants), 1)
+        self.assertIn('entertainment', top_wants.index)
+        self.assertEqual(top_wants['entertainment'], 125)
+        os.remove(case_file)
+
+    def test_50_30_20_ratio_check(self):
+        """Test that analyze_data returns correct 50/30/20 ratios."""
+        ratio_file = "ratio_test.xlsx"
+        data = {
+            'Date': ['1/1/2026', '1/2/2026', '1/3/2026', '1/4/2026', '1/5/2026'],
+            'Name': ['Rent', 'Bill', 'Food', 'Movie', 'Savings'],
+            'Type': ['Needs', 'Needs', 'Wants', 'Wants', 'Savings'],
+            'Amount': [500, 500, 300, 300, 400],  # 1000 needs, 600 wants, 400 savings = 50%, 30%, 20%
+            'Category': ['Rent', 'Utilities', 'Groceries', 'Entertainment', 'Investment']
+        }
+        pd.DataFrame(data).to_excel(ratio_file, index=False)
+        valid, df = validate_file(ratio_file)
+        self.assertTrue(valid)
+        income = 2000
+        needs, wants, savings, top_wants = analyze_data(df, income)
+        # Check percentages
+        needs_pct = (needs / income) * 100
+        wants_pct = (wants / income) * 100
+        savings_pct = (savings / income) * 100
+        self.assertAlmostEqual(needs_pct, 50, places=1)
+        self.assertAlmostEqual(wants_pct, 30, places=1)
+        self.assertAlmostEqual(savings_pct, 20, places=1)
+        os.remove(ratio_file)
+
+    def test_currency_edge_cases(self):
+        """Test currency lookup edge cases."""
+        # Invalid currency code
+        self.assertIsNone(get_currency_symbol(self.currencies, 'XXX'))
+        # Empty string currency code
+        self.assertIsNone(get_currency_symbol(self.currencies, ''))
+        # None as currency code
+        self.assertIsNone(get_currency_symbol(self.currencies, None))
+
 if __name__ == '__main__':
     unittest.main()
