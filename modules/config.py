@@ -1,12 +1,22 @@
 import os
 
-# Configuration constants
+# === FILE PATHS ===
+# Path to currencies data file (supports multiple currencies)
 CURRENCIES_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'currencies.json')
+
+# Log file for application events
 LOG_FILE = 'app.log'
+
+# Template file name for Excel export (example data for users)
 TEMPLATE_FILE = 'Finance Check 50_30_20 Templates.xlsx'
+
+# Output PDF report file name
 PDF_FILE = 'financial_report.pdf'
+
+# User's Downloads folder (where templates and reports are saved)
 DOWNLOADS_PATH = os.path.expanduser('~/Downloads')
 
-# Chart settings
+# === CHART VISUALIZATION SETTINGS ===
+# Standard chart dimensions for PDF embedding
 CHART_WIDTH = 400
 CHART_HEIGHT = 500
