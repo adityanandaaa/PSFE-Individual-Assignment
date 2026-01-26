@@ -1,6 +1,6 @@
-# Financial Health Checker
+# Finance Check 50/30/20
 
-A Python-based application for analyzing personal finances using the 50/30/20 budgeting framework. It validates expense data from Excel files, provides AI-driven insights, and generates professional PDF reports with charts.
+A web application for analyzing personal finances using the 50/30/20 budgeting framework. Built with Streamlit for easy localhost deployment. It validates expense data from Excel files, provides AI-driven insights, and generates professional PDF reports with charts.
 
 ## Features
 
@@ -35,20 +35,31 @@ A Python-based application for analyzing personal finances using the 50/30/20 bu
 
 1. Clone the repository.
 2. Install dependencies: `pip install -r requirements.txt`
-3. Run the app: `python app.py`
+3. Create a `.env` file with your Google Gemini API key:
+   ```
+## Running the App
+
+The web app runs locally at `http://localhost:8501`:
+
+```bash
+streamlit run web_app.py
+```
+
+Then open your browser to the provided URL.
 
 ## Usage
 
 1. Enter your monthly net income and select currency.
 2. Download the template or use your own Excel file with columns: Date, Name, Type, Amount, Category.
-3. Upload the file and validate.
-4. Analyze and generate the PDF report.
+3. Upload the file and analyze.
+4. View your 50/30/20 breakdown, health score, and AI advice.
+5. Download the PDF report for record-keeping.
 
 ## Requirements
 
 - Python 3.8+
-- Libraries: tkinter, pandas, matplotlib, reportlab, google-generativeai
-- For packaging: PyInstaller
+- Libraries: streamlit, pandas, matplotlib, reportlab, google-generativeai
+- Google Gemini API key (free tier available)
 
 ## Packaging
 
