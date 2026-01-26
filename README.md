@@ -1,4 +1,4 @@
-# New Python Project
+# PSFE-Individual-Assignment
 
 This is a simple Hello World Python project.
 
