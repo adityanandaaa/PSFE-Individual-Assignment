@@ -16,18 +16,16 @@ A web application for analyzing personal finances using the 50/30/20 budgeting f
 
 ```
 .
-├── app.py                 # Main entry point
+├── web_app.py             # Streamlit web app entry point
 ├── modules/
 │   ├── config.py          # Configuration constants
 │   ├── logic.py           # Data validation and analysis
 │   ├── ai.py              # AI integration
-│   ├── pdf_generator.py   # Chart and PDF generation
-│   └── ui.py              # Tkinter UI
+│   └── pdf_generator.py   # Chart and PDF generation
 ├── data/
 │   └── currencies.json    # Currency data
 ├── test_app.py            # Unit tests
 ├── requirements.md        # Detailed requirements
-├── setup.py               # PyInstaller script
 └── README.md              # This file
 ```
 
@@ -60,10 +58,6 @@ Then open your browser to the provided URL.
 - Python 3.8+
 - Libraries: streamlit, pandas, matplotlib, reportlab, google-generativeai
 - Google Gemini API key (free tier available)
-
-## Packaging
-
-To create a standalone .exe: `python setup.py`
 
 ## License
 
