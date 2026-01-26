@@ -50,7 +50,17 @@ def validate_file(file_path):
             if row['Type'] not in ['Needs', 'Wants', 'Savings']:
                 errors.append(f"Row {idx+1}: Invalid type.")
             # Amount
-            if pd.isna(row['Amount']) or not isinstance(row['Amount'], (int, float)) or row['Amount'] <= 0 or len(str(row['Amount']).split('.')[-1]) > 3:
+            try:
+                amt = float(row['Amount'])
+                if amt <= 0:
+                    errors.append(f"Row {idx+1}: Invalid amount.")
+                else:
+                    s = str(row['Amount'])
+                    if '.' in s:
+                        dec = s.split('.')[-1]
+                        if len(dec) > 3:
+                            errors.append(f"Row {idx+1}: Invalid amount.")
+            except Exception:
                 errors.append(f"Row {idx+1}: Invalid amount.")
             # Category
             if pd.isna(row['Category']) or not isinstance(row['Category'], str) or len(str(row['Category'])) > 150:

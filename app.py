@@ -2,6 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data
 from modules.ai import get_ai_insights
 from modules.pdf_generator import generate_pdf
@@ -117,7 +121,6 @@ class FinancialHealthChecker:
         symbol = get_currency_symbol(self.currencies, currency)
 
         needs, wants, savings, top_wants = analyze_data(self.validated_data, income)
-
         # AI
         score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
 
@@ -127,38 +130,7 @@ class FinancialHealthChecker:
         messagebox.showinfo("Success", f"PDF generated: {pdf_path}")
         self.log_feedback(f"PDF generated: {pdf_path}")
 
-    def get_ai_insights(self, income, needs, wants, savings, top_wants):
-        try:
-            genai.configure(api_key="AIzaSyBb4ZnoMT_t_LIZ1jOGX_xbw6GIqzil03g")  # Use the provided key
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            payload = {
-                "role": "Senior Financial Consultant specializing in 50/30/20",
-                "income": income,
-                "buckets": {"needs": needs, "wants": wants, "savings": savings},
-                "top_categories": top_wants,
-                "goal": "Achieve 20% savings target"
-            }
-            prompt = f"Analyze this financial data: {json.dumps(payload)}. Provide a health score 0-100 and 3 tips."
-            response = model.generate_content(prompt)
-            text = response.text
-            # Parse score and advice (simple parsing)
-            lines = text.split('\n')
-            score = 75  # Default
-            for line in lines:
-                if 'score' in line.lower() or 'health' in line.lower():
-                    import re
-                    nums = re.findall(r'\d+', line)
-                    if nums:
-                        score = int(nums[0])
-                        break
-            advice = text
-            return score, advice
-        except Exception as e:
-            logging.error(f"AI error: {str(e)}")
-            # Fallback advice
-            score = 70
-            advice = "Based on your data, focus on reducing Wants to increase Savings. Consider budgeting apps for tracking."
-            return score, advice
+    # Note: AI integration is handled by `modules.ai.get_ai_insights`.
 
     def generate_bar_chart(self, needs, wants, savings, income, symbol):
         categories = ['Needs', 'Wants', 'Savings']
