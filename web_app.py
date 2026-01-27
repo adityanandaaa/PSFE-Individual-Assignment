@@ -1,3 +1,10 @@
+# ============================================================================
+# FINANCE HEALTH CHECK 50/30/20 WEB APPLICATION
+# ============================================================================
+# A Streamlit-based web application for analyzing personal finances using the
+# 50/30/20 budgeting rule (50% needs, 30% wants, 20% savings).
+# ============================================================================
+
 import streamlit as st
 import pandas as pd
 from io import BytesIO
@@ -6,37 +13,65 @@ import re
 import tempfile
 from dotenv import load_dotenv
 
+# Import core business logic modules
 from finance_app.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data, calculate_health_score
 from finance_app.ai import get_ai_insights
 from finance_app.pdf_generator import generate_pdf
 from finance_app.config import get_pdf_filename, get_template_filename, DOWNLOADS_PATH
 
-# Load environment variables
+# Load environment variables (e.g., GEMINI_API_KEY) from .env file
 load_dotenv()
 
-# Constants
-MAX_FILE_SIZE_MB = 5
-MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+MAX_FILE_SIZE_MB = 5  # Maximum allowed Excel file size in megabytes
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024  # Convert to bytes for comparison
 
-# Cached functions for performance
+# ============================================================================
+# CACHED FUNCTIONS FOR PERFORMANCE OPTIMIZATION
+# ============================================================================
+# These functions use Streamlit's caching to avoid expensive operations
+# on every app rerun, significantly improving responsiveness.
+
 @st.cache_data
 def get_currencies_data():
-    """Cached wrapper for loading currencies."""
+    """Cached wrapper for loading currencies.
+    
+    Caches the currency list from JSON file so it's only loaded once per session.
+    This avoids repeated file I/O operations.
+    
+    Returns:
+        list: List of currency dictionaries with 'code' and 'symbol' keys
+    """
     return load_currencies()
 
 @st.cache_data
 def parse_and_validate_file(file_bytes):
     """Parse and validate Excel file with caching.
     
+    Consolidates file reading into a single operation that handles both:
+    1. Validation: Checks data integrity and format compliance
+    2. Preview: Prepares DataFrame for display in the UI
+    
+    This eliminates redundant file I/O (was 3 reads, now 1 read).
+    
+    Args:
+        file_bytes (bytes): Raw file contents from uploaded Excel file
+        
     Returns:
-        tuple: (is_valid, validation_result, preview_df)
+        tuple: (is_valid: bool, validation_result: list, preview_df: DataFrame)
+            - is_valid: Whether file passed all validation checks
+            - validation_result: List of (row_num, error_msg) tuples if invalid
+            - preview_df: DataFrame for UI preview (first 50 rows)
     """
-    # Single read operation for both validation and preview
+    # Single validation operation that returns structured errors
     is_valid, validation_result = validate_file(BytesIO(file_bytes))
     
-    # Create preview DataFrame
+    # Create preview DataFrame for UI display
     try:
         preview_df = pd.read_excel(BytesIO(file_bytes))
+        # Ensure Amount column is numeric for proper formatting
         if 'Amount' in preview_df.columns:
             preview_df['Amount'] = pd.to_numeric(preview_df['Amount'], errors='coerce')
     except Exception:
@@ -44,20 +79,24 @@ def parse_and_validate_file(file_bytes):
     
     return is_valid, validation_result, preview_df
 
-# Load currencies from JSON
+# Load currencies from JSON file (cached on first load)
 currencies = get_currencies_data()
+# Extract currency codes and symbols into lookup dictionaries for UI binding
 currency_codes = [c['code'] for c in currencies]
 currency_symbols = {c['code']: c['symbol'] for c in currencies}
 
-# Page configuration
+# ============================================================================
+# PAGE CONFIGURATION AND STYLING
+# ============================================================================
+# Configure Streamlit page settings and custom CSS for tooltips
 st.set_page_config(
     page_title="Finance Health Check 50/30/20",
     page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide",  # Wide layout for better space utilization
+    initial_sidebar_state="expanded"  # Show sidebar by default
 )
 
-# Custom CSS
+# Custom CSS for interactive tooltips that explain 50/30/20 rule
 st.markdown("""
     <style>
     .main {
