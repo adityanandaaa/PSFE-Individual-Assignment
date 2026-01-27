@@ -1,4 +1,4 @@
-# Finance Check 50/30/20
+# Finance Health Check 50/30/20
 
 A modern web application for analyzing personal finances using the 50/30/20 budgeting framework. Built with Streamlit - no .exe installation needed, just run a simple command.
 
@@ -71,7 +71,7 @@ Shows:
 │       └── config.py       # Configuration
 ├── data/
 │   ├── currencies.json     # 84 currencies
-│   └── Finance Check 50_30_20 Templates.xlsx  # Excel template
+│   └── Finance Health Check 50_30_20 Templates.xlsx  # Excel template
 ├── tests/
 │   └── test_app.py         # 45 tests (all passing)
 ├── legacy/                 # Old desktop app code

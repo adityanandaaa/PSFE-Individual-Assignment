@@ -79,17 +79,11 @@ def generate_pie_chart(needs, wants, savings, income):
     pie_colors = ['#4A90E2', '#E74C3C', '#2ECC71']
     explode = (0.05, 0.05, 0.05)  # Slightly separate slices
     
-    # Calculate percentages relative to income (matching the table)
-    needs_pct = (needs / income * 100) if income else 0
-    wants_pct = (wants / income * 100) if income else 0
-    savings_pct = (savings / income * 100) if income else 0
-    percentages = [needs_pct, wants_pct, savings_pct]
-    
     # Create pie chart with percentage labels
     plt.figure(figsize=(7, 7))
     
-    # Custom autopct function to show percentage (relative to income) and amount
-    def make_autopct(values, pcts):
+    # Custom autopct function to show only amount (not percentage)
+    def make_autopct(values):
         def my_autopct(pct):
             # Find which slice this percentage corresponds to
             total = sum(values)
@@ -98,19 +92,19 @@ def generate_pie_chart(needs, wants, savings, income):
             # Find closest match to determine which category
             diffs = [abs(val - v) for v in values]
             idx = diffs.index(min(diffs))
-            return f'{pcts[idx]:.1f}%\n({values[idx]:,.0f})'
+            return f'{values[idx]:,.0f}'
         return my_autopct
     
     wedges, texts, autotexts = plt.pie(sizes, labels=labels, colors=pie_colors, 
-                                        autopct=make_autopct(sizes, percentages),
+                                        autopct=make_autopct(sizes),
                                         startangle=140,
                                         explode=explode, shadow=True,
                                         textprops={'fontsize': 11, 'fontweight': 'bold'})
     
-    # Style percentage text
+    # Style amount text
     for autotext in autotexts:
         autotext.set_color('white')
-        autotext.set_fontsize(9)
+        autotext.set_fontsize(10)
         autotext.set_fontweight('bold')
     
     plt.title('Expense Breakdown', fontsize=14, fontweight='bold', pad=20)

@@ -1,5 +1,5 @@
 """
-TEST SUITE: Finance Check 50/30/20 Web App
+TEST SUITE: Finance Health Check 50/30/20 Web App
 ==========================================
 
 This test suite validates the core logic modules used by the Streamlit web app.

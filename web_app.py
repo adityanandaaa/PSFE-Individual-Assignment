@@ -20,7 +20,7 @@ currency_symbols = {c['code']: c['symbol'] for c in currencies}
 
 # Page configuration
 st.set_page_config(
-    page_title="Finance Check 50/30/20",
+    page_title="Finance Health Check 50/30/20",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -66,7 +66,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("💰 Finance Check 50/30/20")
+st.title("💰 Finance Health Check 50/30/20")
 st.markdown(
     "<span class='tooltip'>"
     "<span class='tooltip-label'>Analyze your financial health with the 50/30/20 budgeting rule</span>"
@@ -113,7 +113,7 @@ with st.sidebar:
     
     # Direct template download
     try:
-        template_path = "data/Finance Check 50_30_20 Templates.xlsx"
+        template_path = "data/Finance Health Check 50_30_20 Templates.xlsx"
         with open(template_path, "rb") as f:
             template_data = f.read()
         st.download_button(
@@ -358,7 +358,7 @@ if st.session_state.analysis_done and "analysis_result" in st.session_state:
 st.divider()
 st.markdown("""
     <div style='text-align: center; color: #888; margin-top: 20px;'>
-    <p>Finance Check 50/30/20 | Built with Streamlit</p>
+    <p>Finance Health Check 50/30/20 | Built with Streamlit</p>
         <p>
             <span class="tooltip">
                 <span class="tooltip-label">Analyze your spending using the proven 50/30/20 budgeting method</span>

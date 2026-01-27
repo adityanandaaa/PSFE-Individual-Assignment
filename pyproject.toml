@@ -1,9 +1,9 @@
 [project]
 name = "finance-app"
 version = "0.1.0"
-description = "Finance Check 50/30/20 Streamlit web app"
+description = "Finance Health Check 50/30/20 Streamlit web app"
 authors = [
-  { name = "Finance Check" }
+  { name = "Finance Health Check" }
 ]
 readme = "README.md"
 requires-python = ">=3.9"

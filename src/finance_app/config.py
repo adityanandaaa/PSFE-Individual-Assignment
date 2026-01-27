@@ -10,7 +10,7 @@ CURRENCIES_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'c
 LOG_FILE = 'app.log'
 
 # Template file name for Excel export (example data for users)
-TEMPLATE_FILE = 'Finance Check 50_30_20 Templates.xlsx'
+TEMPLATE_FILE = 'Finance Health Check 50_30_20 Templates.xlsx'
 
 # Output PDF report file name prefix (timestamp will be added for uniqueness)
 PDF_FILE = 'financial_report.pdf'
@@ -33,14 +33,14 @@ def get_pdf_filename():
 def get_template_filename():
     """Generate unique template filename with timestamp to avoid collisions.
     
-    Creates filenames like: Finance Check 50_30_20 Templates_20260126_143022.xlsx
+    Creates filenames like: Finance Health Check 50_30_20 Templates_20260126_143022.xlsx
     This allows users to download multiple template copies without overwriting.
     
     Returns:
         str: Unique template filename with timestamp
     """
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    return f'Finance Check 50_30_20 Templates_{timestamp}.xlsx'
+    return f'Finance Health Check 50_30_20 Templates_{timestamp}.xlsx'
 
 # === CHART VISUALIZATION SETTINGS ===
 # Standard chart dimensions for PDF embedding
