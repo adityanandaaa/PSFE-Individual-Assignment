@@ -41,8 +41,8 @@ The Gemini API is used only for generating personalized financial advice and rec
 The application is implemented in Python 3.13+ with a modular structure for maintainability. The main entry point is `web_app.py` (Streamlit web application), which imports from the `src/finance_app/` directory. Key modules include:
 - `config.py`: Configuration constants and paths.
 - `logic.py`: Data validation, loading, and analysis functions with caching optimizations.
-- `ai.py`: AI insights integration with Gemini 2.5 Flash, enhanced payload with 7-section framework and priority detection, and fallback templates.
-- `pdf_generator.py`: Chart generation using Matplotlib and PDF creation with ReportLab.
+- `ai.py`: **Async** AI insights integration with Gemini 2.5 Flash, enhanced payload with 7-section framework, currency context, priority detection, and fallback templates.
+- `pdf_generator.py`: Chart generation using Matplotlib and PDF creation with ReportLab, with **markdown cleaning** function for AI responses.
 - `logging_config.py`: Centralized logging configuration with automatic rotation (10MB max, 5 backups).
 
 Data processing uses pandas and openpyxl for Excel handling. PDF generation uses ReportLab for layout and Matplotlib for chart creation. Input and output are exclusively handled via Excel (.xlsx) and PDF, respectively. The app runs as a Streamlit web application on localhost:8501, requiring only Python 3.13+ with the dependencies listed in requirements.txt (google-genai v1.60.0 for modern Gemini API). All processing occurs locally on the user's machine with no external server deployment.
@@ -52,13 +52,29 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - Streamlit caching (@st.cache_data) for UI components and currency data.
 - Function-level caching (@lru_cache) for expensive operations (currency loading).
 - Automatic log rotation with separate file (INFO level) and console (WARNING level) handlers.
-- Matplotlib figure cleanup to prevent memory leaks.
+- Matplotlib figure cleanup with try/finally blocks to prevent memory leaks.
+- **Async AI calls**: Non-blocking pattern for better scalability.
+
+**UI Improvements:**
+- **Date Formatting**: Preview table displays dates in dd/mm/yyyy format.
+- **Total Expenses**: Real-time calculation displayed after file validation.
+- **Better Flow**: Validation → Success message → Total expenses → Preview table.
+
+**Production Fixes:**
+- **Specific Exception Handling**: Replaced broad Exception catches with ValueError, KeyError, IOError.
+- **Resource Cleanup**: Try/finally blocks ensure matplotlib figures are always closed.
+- **Secure Logging**: Only log exception type names, never sensitive financial data.
 
 **AI Enhancements:**
-- Enhanced payload structure: 7 sections (user_profile, financial_overview, budget_breakdown, deviation_analysis, top_wants_categories, health_metrics, priority_areas) with 30+ data fields.
+- **Async Integration**: Non-blocking async/await pattern using `client.aio.models.generate_content`
+- **Currency-Aware**: AI receives user's selected currency for localized financial advice
+- Enhanced payload structure: 7 sections (user_profile with currency, financial_overview, budget_breakdown, deviation_analysis, top_wants_categories, health_metrics, priority_areas) with 30+ data fields.
 - Priority detection functions for identifying primary and secondary focus areas based on budget deviations.
-- Generation config: temperature 0.7, top_p 0.95, top_k 40, max_tokens 300 (compact output for free tier), model gemini-2.5-flash; prompt uses compact JSON to reduce input tokens.
-- Comprehensive prompt requesting current state assessment, key findings, 3-5 recommendations, impact analysis, quick wins, and long-term strategy.
+- Compact prompt: JSON minification (separators=",",":") and concise instructions to reduce input tokens for free tier.
+- Top wants limited to 3 categories for efficiency.
+- Model: gemini-2.5-flash (optimized for speed and cost).
+- **Markdown Cleaning**: Automatic removal of markdown syntax (###, **, *, bullets) before PDF generation.
+- Comprehensive prompt requesting current state assessment, 3 specific recommendations, 1 quick win, and 1 long-term habit.
 
 **Logging & Monitoring:**
 - Comprehensive logging configuration with RotatingFileHandler and ConsoleHandler.

@@ -53,21 +53,22 @@ Shows:
 
 ### 5. Get AI Advice
 - Personalized financial recommendations powered by Google Gemini 2.5 Flash
+- **Async API Integration**: Non-blocking async/await pattern for better scalability
+- **Currency-Aware Advice**: AI receives user's selected currency and provides localized recommendations
 - Comprehensive analysis with 7-section payload:
   * Financial overview and coverage percentage
   * Budget breakdown with percentage allocations
   * Precise deviation analysis from 50/30/20 targets
-  * Top spending categories breakdown
+  * Top spending categories breakdown (limited to top 3 for efficiency)
   * Health metrics and scoring methodology
   * Primary and secondary focus area recommendations
   * Expected improvement potential
 - Structured AI prompts requesting:
   * Current state assessment
-  * Key findings (2-3 impactful issues)
-  * 3-5 specific, actionable recommendations
-  * Expected impact analysis
-  * Quick wins for immediate implementation
-  * Long-term sustainability strategy
+  * 3 specific recommendations with quantified impact
+  * 1 quick win and 1 long-term habit
+  * Clear headers and bullets for readability
+- **Markdown Cleaning**: AI responses automatically cleaned before PDF generation
 
 ### 6. Download PDF Report
 - Click "Generate PDF Report"
@@ -76,7 +77,18 @@ Shows:
 
 ## 🎯 Recent Enhancements
 
-### Logging Configuration (Latest)
+### Production Readiness Improvements (Latest)
+- **Async AI Integration**: Converted to async/await pattern using `client.aio.models.generate_content`
+- **Currency Context**: AI now receives user's selected currency for localized advice
+- **Markdown Cleaning**: Automatic removal of markdown formatting (###, **, *) from AI responses before PDF generation
+- **UI Date Formatting**: Preview table displays dates in dd/mm/yyyy format for better readability
+- **Total Expenses Display**: Real-time calculation shown after file validation
+- **Critical Production Fixes**:
+  * Specific exception handling (replaced broad Exception catches)
+  * Matplotlib figure cleanup (try/finally blocks to prevent memory leaks)
+  * Secure logging (no sensitive financial data in logs)
+
+### Logging Configuration
 - **Comprehensive Logging System**: Centralized logging configuration module
 - **File Logging**: INFO+ messages saved to `app.log` with automatic rotation
 - **Console Logging**: Only WARNING+ to terminal for minimal noise
@@ -84,23 +96,22 @@ Shows:
 - **Documentation**: Complete LOGGING.md guide with usage examples and best practices
 - **Module Integration**: All modules (ai.py, logic.py) use module-level loggers
 
-### Bug Fixes (Latest)
+### Bug Fixes
 - **Fixed set_page_config() Error**: Moved to first Streamlit command in web_app.py
 - **Fixed error_rows Variable**: Initialize before conditional block to prevent NameError
+- **Fixed Duplicate Display**: Removed duplicate total expenses calculation
 - **Improved Code Structure**: Better separation of concerns in initialization
 
 ### AI Payload Improvements
+- **Async API Pattern**: Non-blocking async/await for better concurrency
 - **7-Section Financial Analysis**: Comprehensive payload with 30+ data fields
 - **Smart Priority Detection**: AI determines primary and secondary focus areas based on budget deviations
 - **Deviation Analysis**: Precise calculations showing how far each category is from 50/30/20 targets
 - **Health Status Categorization**: Automatic categorization as Excellent/Good/Fair based on score
-- **Generation Config**: Fine-tuned AI parameters for better response quality
-  * Temperature: 0.7 (balanced creativity and consistency)
-  * Top P: 0.95 (diverse but focused)
-  * Top K: 40 (coherent vocabulary)
-  * Max Tokens: 300 (compact advice optimized for free tier)
-  * Model: gemini-2.5-flash
-  * Prompt: compact JSON payload and concise instructions to reduce input tokens
+- **Currency Context**: User's selected currency included in payload and prompt
+- **Compact Prompt**: Reduced input tokens with JSON minification (separators=",",":")
+- **Top Wants Optimization**: Limited to top 3 categories to reduce token usage
+- **Markdown Support**: AI can use markdown formatting (automatically cleaned for PDF)
 
 ### Code Quality Improvements
 - **66% File I/O Reduction**: Consolidated file reading operations with caching
