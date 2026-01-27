@@ -2,11 +2,56 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import tempfile
 import os
+import re
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+
+def clean_markdown_for_pdf(text):
+    """Remove markdown formatting from text for clean PDF rendering.
+    
+    Strips common markdown syntax like headers (###), bold (**text**),
+    italic (*text*), and bullet points to produce plain text suitable
+    for PDF generation with reportlab.
+    
+    Args:
+        text: String with markdown formatting
+        
+    Returns:
+        str: Clean text without markdown syntax
+    """
+    if not text:
+        return text
+    
+    # Remove markdown headers (###, ##, #)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove bold formatting (**text** or __text__)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    
+    # Remove italic formatting (*text* or _text_)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'_(.+?)_', r'\1', text)
+    
+    # Convert markdown bullet points (* or +) to simple dashes with space
+    text = re.sub(r'^\*\s+', '  - ', text, flags=re.MULTILINE)
+    text = re.sub(r'^\+\s+', '  - ', text, flags=re.MULTILINE)
+    
+    # Remove markdown links [text](url) -> text
+    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)
+    
+    # Clean up multiple spaces (but preserve intentional indentation)
+    text = re.sub(r' {3,}', '  ', text)
+    
+    # Remove extra blank lines (more than 2 consecutive newlines)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
 
 def generate_bar_chart(needs, wants, savings, income, symbol):
     """Generate bar chart comparing actual spending vs 50/30/20 targets.
@@ -250,9 +295,10 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
     
     # === AI INSIGHTS ===
     # Display health score and recommendations
-    # === AI INSIGHTS ===
+    # Clean markdown formatting from AI response before adding to PDF
     story.append(Paragraph("AI Guidance", styles['SectionHeading']))
-    story.append(Paragraph(advice.replace("\n", "<br/>"), styles['Normal']))
+    clean_advice = clean_markdown_for_pdf(advice)
+    story.append(Paragraph(clean_advice.replace("\n", "<br/>"), styles['Normal']))
     story.append(Spacer(1, 14))
     
     # === GENERATE CHARTS ===
