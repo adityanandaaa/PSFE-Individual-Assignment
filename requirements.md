@@ -38,14 +38,40 @@ Weights prioritize wants control (0.5) and savings adequacy (0.6), with lower we
 The Gemini API is used only for generating personalized financial advice and recommendations, not for scoring. The AI receives a structured JSON payload with financial data and provides actionable optimization tips. If the AI connection fails, the report includes the calculated health score with fallback generic advice.
 
 ### 5. Technical Implementation Summary
-The application is implemented in Python with a modular structure for maintainability. The main entry point is `app.py`, which imports from the `modules/` directory. Key modules include:
+The application is implemented in Python 3.13+ with a modular structure for maintainability. The main entry point is `web_app.py` (Streamlit web application), which imports from the `src/finance_app/` directory. Key modules include:
 - `config.py`: Configuration constants and paths.
-- `logic.py`: Data validation, loading, and analysis functions.
-- `ai.py`: AI insights integration with Gemini 2.0 Flash and fallback.
+- `logic.py`: Data validation, loading, and analysis functions with caching optimizations.
+- `ai.py`: AI insights integration with Gemini 2.0 Flash, enhanced payload with 7-section framework and priority detection, and fallback templates.
 - `pdf_generator.py`: Chart generation using Matplotlib and PDF creation with ReportLab.
-- `ui.py`: Tkinter-based user interface.
+- `logging_config.py`: Centralized logging configuration with automatic rotation (10MB max, 5 backups).
 
-Data processing uses pandas and openpyxl for Excel handling. PDF generation uses ReportLab for layout and Matplotlib for chart creation. Input and output are exclusively handled via Excel (.xlsx) and PDF, respectively. The app runs as a Streamlit web application, requiring only Python 3.8+ with the dependencies listed in requirements.txt. All processing occurs locally on the user's machine with no external server deployment. Minimum system requirements: 4GB RAM, 500MB free space. Errors are logged to a local file (e.g., app.log) for debugging. Unit tests are included in test_app.py for validation logic, error handling, and AI fallbacks. All features are designed to meet the assignment requirements, ensuring a professional standard while remaining accessible for a beginner-intermediate developer using Python.
+Data processing uses pandas and openpyxl for Excel handling. PDF generation uses ReportLab for layout and Matplotlib for chart creation. Input and output are exclusively handled via Excel (.xlsx) and PDF, respectively. The app runs as a Streamlit web application on localhost:8501, requiring only Python 3.13+ with the dependencies listed in requirements.txt (google-genai v1.60.0 for modern Gemini API). All processing occurs locally on the user's machine with no external server deployment.
+
+**Performance Optimizations:**
+- 66% file I/O reduction through consolidated validation and unified reading process.
+- Streamlit caching (@st.cache_data) for UI components and currency data.
+- Function-level caching (@lru_cache) for expensive operations (currency loading).
+- Automatic log rotation with separate file (INFO level) and console (WARNING level) handlers.
+- Matplotlib figure cleanup to prevent memory leaks.
+
+**AI Enhancements:**
+- Enhanced payload structure: 7 sections (user_profile, financial_overview, budget_breakdown, deviation_analysis, top_wants_categories, health_metrics, priority_areas) with 30+ data fields.
+- Priority detection functions for identifying primary and secondary focus areas based on budget deviations.
+- Generation config: temperature 0.7, top_p 0.95, top_k 40, max_tokens 2000 for balanced and detailed responses.
+- Comprehensive prompt requesting current state assessment, key findings, 3-5 recommendations, impact analysis, quick wins, and long-term strategy.
+
+**Logging & Monitoring:**
+- Comprehensive logging configuration with RotatingFileHandler and ConsoleHandler.
+- File logging: INFO+ messages to app.log with automatic rotation at 10MB.
+- Console logging: WARNING+ only to minimize noise during app execution.
+- Complete LOGGING.md documentation with usage examples and configuration options.
+
+Minimum system requirements: 4GB RAM, 500MB free space. Errors are logged to a local file (app.log) for debugging with automatic rotation. Unit tests are included in test_app.py (58 comprehensive tests covering validation logic, AI fallbacks, error handling, and integration). The test suite includes:
+- 37 core logic tests for currency handling, income validation, file processing, and health score calculation.
+- 13 AI enhancement tests for payload structure, priority detection, and generation configuration.
+- 8 Streamlit integration tests for UI behavior and session state management.
+
+All features are designed to meet the assignment requirements, ensuring a professional standard while remaining accessible for a beginner-intermediate developer using Python.
 
 ## User Stories
 
@@ -53,7 +79,8 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - **As an Individual Budgeter**, I want to upload an Excel file of my expenses and receive validation feedback so that I can correct errors before analysis.
 - **As an Individual Budgeter**, I want the app to calculate my spending against the 50/30/20 framework and generate a PDF report with charts, a deterministic health score, and AI advice so that I can understand my financial health and make informed decisions.
 - **As an Individual Budgeter**, I want the app to process data locally without storing it externally so that my privacy is protected.
-- **As an Individual Budgeter**, I want a transparent, mathematical health score (not dependent on external AI) along with personalized AI optimization tips so that I can understand why I received my score and how to improve.
+- **As an Individual Budgeter**, I want a transparent, mathematical health score (not dependent on external AI) along with personalized AI optimization tips that identify my primary and secondary budget focus areas so that I can understand why I received my score and how to improve.
+- **As a Developer/Administrator**, I want comprehensive logging with automatic rotation so that I can monitor app performance, debug issues, and maintain the application effectively.
 
 ## Acceptance Criteria
 
@@ -82,11 +109,23 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 - The app runs completely offline for health score calculation and core features.
 - AI integration is optional; core functionality works without Gemini API connection.
 
-**User Story 5: As an Individual Budgeter, I want a transparent, mathematical health score along with personalized AI optimization tips so that I can understand why I received my score and how to improve.**
+**User Story 5: As an Individual Budgeter, I want a transparent, mathematical health score along with personalized AI optimization tips that identify my primary and secondary budget focus areas so that I can understand why I received my score and how to improve.**
 - Health score is calculated using a deterministic mathematical formula independent of AI services.
 - Score ranges from 0-100 and penalizes only risky behaviors: needs overspend (weight 0.2), wants overspend (weight 0.5), and under-saving (weight 0.6).
 - Conservative spending (underspending in any category) is not penalized; perfect score is still 100 even with lower spending.
 - Severe penalties apply: Savings < 0 results in score 0 (financial danger); Needs > 75% results in -10 penalty.
-- AI (Gemini) provides personalized optimization tips for reducing wants and increasing savings to reach financial goals.
-- If AI fails, the report includes the calculated health score with generic fallback advice based on the 50/30/20 analysis.</content>
+- AI (Gemini) payload includes comprehensive financial context: user profile, financial overview, budget breakdown with deviations, top 5 wants categories, health metrics, and identified primary/secondary priority areas.
+- Priority detection analyzes budget deviations to recommend focus areas: primary priority (reduce needs overspend, reduce wants overspend, or increase savings) and secondary priority (address secondary budget issues).
+- AI provides personalized optimization tips for reducing wants and increasing savings with impact analysis, quick wins, and long-term strategy.
+- If AI fails, the report includes the calculated health score with generic fallback advice based on the 50/30/20 analysis.
+
+**User Story 6: As a Developer/Administrator, I want comprehensive logging with automatic rotation so that I can monitor app performance, debug issues, and maintain the application effectively.**
+- Logging configuration provides separate handlers for file and console output with configurable log levels.
+- File logging writes to app.log with INFO level, capturing detailed application events and errors.
+- Console logging displays WARNING level and above, minimizing noise during normal app operation.
+- Automatic log rotation triggers at 10MB file size with 5 backup files maintained for historical reference.
+- Log entries include timestamps (YYYY-MM-DD HH:MM:SS), log level, and descriptive messages for easy debugging.
+- Logging configuration can be dynamically adjusted at runtime via set_log_level() function.
+- Module-level loggers via get_logger(__name__) provide consistent logging across all application modules.
+- LOGGING.md documentation provides configuration examples and best practices for development and production environments.</content>
 <parameter name="filePath">/Users/macbookairm3/new_python_project/requirements.md
