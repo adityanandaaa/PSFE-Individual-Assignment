@@ -4,6 +4,10 @@ import logging
 from datetime import datetime
 from functools import lru_cache
 from finance_app.config import CURRENCIES_FILE
+from finance_app.logging_config import get_logger
+
+# Get module logger
+logger = get_logger(__name__)
 
 @lru_cache(maxsize=1)
 def load_currencies():
@@ -14,7 +18,7 @@ def load_currencies():
             return json.load(f)
     except FileNotFoundError:
         # Log error if file does not exist and return empty list as fallback
-        logging.error("currencies.json not found.")
+        logger.error("currencies.json not found.")
         return []
 
 def is_valid_income(income):

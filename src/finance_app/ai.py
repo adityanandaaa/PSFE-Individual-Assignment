@@ -9,6 +9,10 @@ import logging
 import re
 import os
 from finance_app.logic import calculate_health_score
+from finance_app.logging_config import get_logger
+
+# Get module logger
+logger = get_logger(__name__)
 
 # Import the modern google-genai package
 try:
@@ -19,7 +23,7 @@ except ImportError:
     genai = None
     types = None
     GENAI_AVAILABLE = False
-    logging.warning("google-genai package not available; AI advice will use fallback mode.")
+    logger.warning("google-genai package not available; AI advice will use fallback mode.")
 
 
 def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
@@ -276,7 +280,7 @@ Format your response with clear headers and bullet points for readability."""
 
     except Exception as e:
         # Log error and return score with fallback advice
-        logging.error(f"AI error: {str(e)}")
+        logger.error(f"AI error: {str(e)}")
         return score, fallback_advice
 
 

@@ -11,6 +11,7 @@ from io import BytesIO
 import os
 import re
 import tempfile
+import logging
 from dotenv import load_dotenv
 
 # Import core business logic modules
@@ -18,9 +19,23 @@ from finance_app.logic import load_currencies, is_valid_income, get_currency_sym
 from finance_app.ai import get_ai_insights
 from finance_app.pdf_generator import generate_pdf
 from finance_app.config import get_pdf_filename, get_template_filename, DOWNLOADS_PATH
+from finance_app.logging_config import setup_logging, get_logger
 
 # Load environment variables (e.g., GEMINI_API_KEY) from .env file
 load_dotenv()
+
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+# Initialize logging with INFO level for file, WARNING for console
+# This prevents excessive logging to console while keeping detailed file logs
+logger = setup_logging(
+    log_level=logging.INFO,        # Log INFO+ to app.log
+    log_file='app.log',             # Log file path
+    console_level=logging.WARNING,  # Only WARNING+ to console/terminal
+    max_bytes=10*1024*1024,         # 10MB per log file
+    backup_count=5                  # Keep 5 backup log files
+)
 
 # ============================================================================
 # CONSTANTS
