@@ -41,7 +41,7 @@ The Gemini API is used only for generating personalized financial advice and rec
 The application is implemented in Python 3.13+ with a modular structure for maintainability. The main entry point is `web_app.py` (Streamlit web application), which imports from the `src/finance_app/` directory. Key modules include:
 - `config.py`: Configuration constants and paths.
 - `logic.py`: Data validation, loading, and analysis functions with caching optimizations.
-- `ai.py`: AI insights integration with Gemini 2.0 Flash, enhanced payload with 7-section framework and priority detection, and fallback templates.
+- `ai.py`: AI insights integration with Gemini 2.5 Flash, enhanced payload with 7-section framework and priority detection, and fallback templates.
 - `pdf_generator.py`: Chart generation using Matplotlib and PDF creation with ReportLab.
 - `logging_config.py`: Centralized logging configuration with automatic rotation (10MB max, 5 backups).
 
@@ -57,7 +57,7 @@ Data processing uses pandas and openpyxl for Excel handling. PDF generation uses
 **AI Enhancements:**
 - Enhanced payload structure: 7 sections (user_profile, financial_overview, budget_breakdown, deviation_analysis, top_wants_categories, health_metrics, priority_areas) with 30+ data fields.
 - Priority detection functions for identifying primary and secondary focus areas based on budget deviations.
-- Generation config: temperature 0.7, top_p 0.95, top_k 40, max_tokens 2000 for balanced and detailed responses.
+- Generation config: temperature 0.7, top_p 0.95, top_k 40, max_tokens 300 (compact output for free tier), model gemini-2.5-flash; prompt uses compact JSON to reduce input tokens.
 - Comprehensive prompt requesting current state assessment, key findings, 3-5 recommendations, impact analysis, quick wins, and long-term strategy.
 
 **Logging & Monitoring:**

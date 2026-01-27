@@ -23,7 +23,7 @@ Opens at: **http://localhost:8501**
 - **📁 File Upload**: Validate Excel files with your spending data
 - **📊 Budget Analysis**: Automatic Needs/Wants/Savings breakdown
 - **💪 Health Score**: Financial health score (0-100) with color coding
-- **🤖 AI Advice**: Personalized financial recommendations powered by Google Gemini 2.0 Flash
+- **🤖 AI Advice**: Personalized financial recommendations powered by Google Gemini 2.5 Flash
 - **📊 Smart Priority Detection**: AI analyzes deviations and recommends primary/secondary focus areas
 - **📈 Visualizations**: Interactive charts showing budget breakdown
 - **📥 PDF Reports**: Download comprehensive financial health reports
@@ -52,7 +52,7 @@ Shows:
 - See % of income in each category
 
 ### 5. Get AI Advice
-- Personalized financial recommendations powered by Google Gemini 2.0 Flash
+- Personalized financial recommendations powered by Google Gemini 2.5 Flash
 - Comprehensive analysis with 7-section payload:
   * Financial overview and coverage percentage
   * Budget breakdown with percentage allocations
@@ -98,7 +98,9 @@ Shows:
   * Temperature: 0.7 (balanced creativity and consistency)
   * Top P: 0.95 (diverse but focused)
   * Top K: 40 (coherent vocabulary)
-  * Max Tokens: 2000 (detailed, comprehensive advice)
+  * Max Tokens: 300 (compact advice optimized for free tier)
+  * Model: gemini-2.5-flash
+  * Prompt: compact JSON payload and concise instructions to reduce input tokens
 
 ### Code Quality Improvements
 - **66% File I/O Reduction**: Consolidated file reading operations with caching

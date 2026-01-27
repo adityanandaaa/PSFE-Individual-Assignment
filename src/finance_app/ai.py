@@ -203,7 +203,8 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
                     "percentage_of_wants": round((amount / wants * 100) if wants else 0, 1),
                     "percentage_of_income": round((amount / income * 100) if income else 0, 1)
                 }
-                for category, amount in list(top_wants.items())[:5]
+                # Limit to top 3 to reduce prompt size for free tier
+                for category, amount in list(top_wants.items())[:3]
             },
             
             # === HEALTH SCORE DETAILS ===
@@ -222,29 +223,17 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
             }
         }
         
-        # === BUILD ENHANCED PROMPT ===
-        # Create a detailed prompt that guides AI to provide specific, actionable feedback
-        prompt = f"""You are an expert financial advisor specializing in the 50/30/20 budgeting methodology.
-
-FINANCIAL PROFILE:
-{json.dumps(prompt_payload, indent=2)}
-
-YOUR TASK:
-Analyze this financial data and provide:
-1. **Current State Assessment**: Describe the user's budget alignment and overall financial health
-2. **Key Findings**: Identify the 2-3 most impactful issues affecting their financial health
-3. **Specific, Actionable Recommendations**: Provide 3-5 concrete steps to improve their budget
-4. **Expected Impact**: Explain how each recommendation would improve their health score
-5. **Quick Wins**: Identify changes they could implement immediately
-6. **Long-term Strategy**: Suggest sustainable habits for maintaining a healthy budget
-
-Focus on:
-- Precise numbers and specific categories to adjust
-- Realistic, achievable goals
-- Root causes of budget imbalances
-- The relationship between their categories and their health score
-
-Format your response with clear headers and bullet points for readability."""
+        # === BUILD COMPACT, HIGH-QUALITY PROMPT (reduced tokens) ===
+        # Use compact JSON (no spaces) and concise instructions to lower input tokens
+        prompt_json = json.dumps(prompt_payload, separators=(",", ":"), ensure_ascii=False)
+        prompt = (
+            "You are a 50/30/20 financial advisor. Based on the payload, provide:\n"
+            "- Current state assessment\n"
+            "- 3 specific recommendations with quantified impact\n"
+            "- 1 quick win and 1 long-term habit\n"
+            "Respond with clear headers and bullets. Keep it concise.\n"
+            "PAYLOAD:\n" + prompt_json
+        )
 
         # === USE MODERN GENAI CLIENT API ===
         api_key = os.getenv('GEMINI_API_KEY')
@@ -258,13 +247,14 @@ Format your response with clear headers and bullet points for readability."""
         # Generate content using the modern API with enhanced parameters
         # Add timeout to prevent indefinite hanging
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.5-flash',
             contents=prompt,
             generation_config={
                 "temperature": 0.7,  # Balanced creativity and consistency
                 "top_p": 0.95,        # Diverse but focused responses
                 "top_k": 40,          # Limit vocabulary for coherence
-                "max_output_tokens": 2000  # Allow detailed, comprehensive advice
+                # Reduce output tokens due to free tier limits while keeping advice useful
+                "max_output_tokens": 300
             },
             timeout=15.0  # 15-second timeout to prevent indefinite hangs
         )
