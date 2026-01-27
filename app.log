@@ -1,3 +1,1 @@
-2026-01-27 01:19:22 - INFO - Application started successfully
-2026-01-27 01:19:22 - WARNING - This is a warning
-2026-01-27 01:19:22 - ERROR - This is an error
+2026-01-27 01:33:15 - ERROR - AI error: Models.generate_content() got an unexpected keyword argument 'generation_config'

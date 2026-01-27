@@ -27,6 +27,7 @@ Opens at: **http://localhost:8501**
 - **📊 Smart Priority Detection**: AI analyzes deviations and recommends primary/secondary focus areas
 - **📈 Visualizations**: Interactive charts showing budget breakdown
 - **📥 PDF Reports**: Download comprehensive financial health reports
+- **📋 Comprehensive Logging**: Automatic log rotation with file and console handlers
 
 ## 📋 How to Use
 
@@ -75,7 +76,20 @@ Shows:
 
 ## 🎯 Recent Enhancements
 
-### AI Payload Improvements (Latest)
+### Logging Configuration (Latest)
+- **Comprehensive Logging System**: Centralized logging configuration module
+- **File Logging**: INFO+ messages saved to `app.log` with automatic rotation
+- **Console Logging**: Only WARNING+ to terminal for minimal noise
+- **Auto-Rotation**: Logs rotate at 10MB with 5 backup files maintained
+- **Documentation**: Complete LOGGING.md guide with usage examples and best practices
+- **Module Integration**: All modules (ai.py, logic.py) use module-level loggers
+
+### Bug Fixes (Latest)
+- **Fixed set_page_config() Error**: Moved to first Streamlit command in web_app.py
+- **Fixed error_rows Variable**: Initialize before conditional block to prevent NameError
+- **Improved Code Structure**: Better separation of concerns in initialization
+
+### AI Payload Improvements
 - **7-Section Financial Analysis**: Comprehensive payload with 30+ data fields
 - **Smart Priority Detection**: AI determines primary and secondary focus areas based on budget deviations
 - **Deviation Analysis**: Precise calculations showing how far each category is from 50/30/20 targets

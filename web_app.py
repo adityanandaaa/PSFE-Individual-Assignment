@@ -6,6 +6,21 @@
 # ============================================================================
 
 import streamlit as st
+
+# ============================================================================
+# PAGE CONFIGURATION (MUST BE FIRST STREAMLIT COMMAND)
+# ============================================================================
+# Configure Streamlit page settings before any other Streamlit commands
+st.set_page_config(
+    page_title="Finance Health Check 50/30/20",
+    page_icon="💰",
+    layout="wide",  # Wide layout for better space utilization
+    initial_sidebar_state="expanded"  # Show sidebar by default
+)
+
+# ============================================================================
+# IMPORTS (AFTER set_page_config)
+# ============================================================================
 import pandas as pd
 from io import BytesIO
 import os
@@ -101,16 +116,8 @@ currency_codes = [c['code'] for c in currencies]
 currency_symbols = {c['code']: c['symbol'] for c in currencies}
 
 # ============================================================================
-# PAGE CONFIGURATION AND STYLING
+# CUSTOM CSS FOR STYLING
 # ============================================================================
-# Configure Streamlit page settings and custom CSS for tooltips
-st.set_page_config(
-    page_title="Finance Health Check 50/30/20",
-    page_icon="💰",
-    layout="wide",  # Wide layout for better space utilization
-    initial_sidebar_state="expanded"  # Show sidebar by default
-)
-
 # Custom CSS for interactive tooltips that explain 50/30/20 rule
 st.markdown("""
     <style>
@@ -243,6 +250,9 @@ with col1:
             else:
                 # Use cached parsing and validation function
                 is_valid, validation_result, df_preview = parse_and_validate_file(file_bytes)
+                
+                # Initialize error_rows set (will be populated if validation fails)
+                error_rows = set()
                 
                 # Display validation results
                 if not is_valid and validation_result:
