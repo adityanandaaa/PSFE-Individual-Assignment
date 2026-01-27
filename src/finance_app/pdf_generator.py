@@ -323,7 +323,6 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
         f"Actual mix: Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%. Aim for 50/30/20.",
         styles['Muted']
     ))
-    story.append(Paragraph("Tip: bring Wants closer to 30% and direct the difference into Savings.", styles['Muted']))
     story.append(Spacer(1, 12))
     
     # === PIE CHART SECTION ===
@@ -334,14 +333,12 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
         f"The largest category is {largest_label} at {largest_value:.1f}%.",
         styles['Muted']
     ))
-    story.append(Paragraph("The 50/30/20 rule suggests 50% for Needs, 30% for Wants, and 20% for Savings. Focus on rebalancing over-allocated categories.", styles['Muted']))
     story.append(Spacer(1, 12))
     
     # === CATEGORY CHART SECTION ===
     story.append(Paragraph("Top Wants Categories", styles['SectionHeading']))
     story.append(Image(category_path, width=5.5*inch, height=3.6*inch))
     story.append(Paragraph(f"Biggest discretionary areas: {top_wants_desc}.", styles['Muted']))
-    story.append(Paragraph("Trim 1–2 of these categories and redirect that amount to savings.", styles['Muted']))
     
     # === BUILD PDF ===
     doc.build(story)
