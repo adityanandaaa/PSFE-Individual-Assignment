@@ -105,6 +105,9 @@ def parse_and_validate_file(file_bytes):
         # Ensure Amount column is numeric for proper formatting
         if 'Amount' in preview_df.columns:
             preview_df['Amount'] = pd.to_numeric(preview_df['Amount'], errors='coerce')
+        # Format Date column as dd/mm/yyyy for display
+        if 'Date' in preview_df.columns:
+            preview_df['Date'] = pd.to_datetime(preview_df['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
     except (ValueError, KeyError, IOError) as e:
         logger.error(f"Failed to read Excel preview: {type(e).__name__}")
         preview_df = None
@@ -235,6 +238,28 @@ with col1:
     else:
         st.success(f"✅ Income valid: {currency_symbol}{income:,.2f}")
         
+        # Show total expenses if file is uploaded and validated
+        if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
+            try:
+                file_bytes = st.session_state.uploaded_file.getvalue()
+                temp_df = pd.read_excel(BytesIO(file_bytes))
+                if 'Amount' in temp_df.columns:
+                    total_expenses = pd.to_numeric(temp_df['Amount'], errors='coerce').sum()
+                    st.info(f"💰 Total Expenses from uploaded data: {currency_symbol}{total_expenses:,.2f}")
+            except Exception:
+                pass  # Silently ignore if we can't calculate total
+        
+        # Show total expenses if file is uploaded and validated
+        if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
+            try:
+                file_bytes = st.session_state.uploaded_file.getvalue()
+                temp_df = pd.read_excel(BytesIO(file_bytes))
+                if 'Amount' in temp_df.columns:
+                    total_expenses = pd.to_numeric(temp_df['Amount'], errors='coerce').sum()
+                    st.info(f"💰 Total Expenses from uploaded data: {currency_symbol}{total_expenses:,.2f}")
+            except Exception:
+                pass  # Silently ignore if we can't calculate total
+        
         # File upload
         uploaded_file = st.file_uploader(
             "Upload your Excel file",
@@ -276,7 +301,7 @@ with col1:
                         st.info("Rows highlighted in red have validation issues.")
                         def highlight_row(row):
                             return ['background-color: #ffe6e6' if (row.name + 1) in error_rows else '' for _ in row]
-                        # Format Amount to 3 decimal places in preview
+                        # Format Amount to 2 decimal places in preview (Date already formatted)
                         styled = (
                             df_preview.head(50)
                             .style
@@ -285,7 +310,7 @@ with col1:
                         )
                         st.dataframe(styled, use_container_width=True, height=400)
                     else:
-                        # Format Amount to 3 decimal places in preview
+                        # Format Amount to 2 decimal places in preview (Date already formatted)
                         styled = (
                             df_preview.head(50)
                             .style
