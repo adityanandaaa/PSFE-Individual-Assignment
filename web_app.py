@@ -238,28 +238,6 @@ with col1:
     else:
         st.success(f"✅ Income valid: {currency_symbol}{income:,.2f}")
         
-        # Show total expenses if file is uploaded and validated
-        if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
-            try:
-                file_bytes = st.session_state.uploaded_file.getvalue()
-                temp_df = pd.read_excel(BytesIO(file_bytes))
-                if 'Amount' in temp_df.columns:
-                    total_expenses = pd.to_numeric(temp_df['Amount'], errors='coerce').sum()
-                    st.info(f"💰 Total Expenses from uploaded data: {currency_symbol}{total_expenses:,.2f}")
-            except Exception:
-                pass  # Silently ignore if we can't calculate total
-        
-        # Show total expenses if file is uploaded and validated
-        if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
-            try:
-                file_bytes = st.session_state.uploaded_file.getvalue()
-                temp_df = pd.read_excel(BytesIO(file_bytes))
-                if 'Amount' in temp_df.columns:
-                    total_expenses = pd.to_numeric(temp_df['Amount'], errors='coerce').sum()
-                    st.info(f"💰 Total Expenses from uploaded data: {currency_symbol}{total_expenses:,.2f}")
-            except Exception:
-                pass  # Silently ignore if we can't calculate total
-        
         # File upload
         uploaded_file = st.file_uploader(
             "Upload your Excel file",
@@ -293,6 +271,10 @@ with col1:
                     st.error(f"❌ Validation Error: {', '.join(error_messages)}")
                 elif is_valid:
                     st.success("✅ File validated successfully!")
+                    # Calculate and show total expenses after successful validation
+                    if 'Amount' in df_preview.columns:
+                        total_expenses = pd.to_numeric(df_preview['Amount'], errors='coerce').sum()
+                        st.info(f"💰 Total Expenses from uploaded data: {currency_symbol}{total_expenses:,.2f}")
                 
                 # Show preview if available
                 if df_preview is not None:
