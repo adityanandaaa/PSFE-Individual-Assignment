@@ -111,18 +111,136 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         return score, fallback_advice
 
     try:
-        # === BUILD ADVICE PROMPT ===
-        # Create a structured payload with financial data for AI analysis
+        # === BUILD ENHANCED PROMPT PAYLOAD ===
+        # Create a comprehensive, structured payload with detailed financial metrics
+        # This enables the AI to provide more nuanced, context-aware insights
+        
+        # Calculate additional metrics for richer analysis
+        needs_ratio = needs / income if income else 0
+        wants_ratio = wants / income if income else 0
+        savings_ratio = savings / income if income else 0
+        
+        # Calculate deviations from 50/30/20 targets for clarity
+        needs_deviation = needs_ratio - 0.50
+        wants_deviation = wants_ratio - 0.30
+        savings_deviation = savings_ratio - 0.20
+        
+        # Total categorized spending (should equal income if all spent)
+        total_categorized = needs + wants + savings
+        uncategorized = max(0, income - total_categorized)
+        
+        # Determine health status category
+        if score >= 80:
+            health_status = "Excellent - Well-balanced budget"
+        elif score >= 60:
+            health_status = "Good - Room for optimization"
+        else:
+            health_status = "Fair - Significant rebalancing needed"
+        
+        # Build comprehensive prompt payload for AI analysis
         prompt_payload = {
-            "role": "Senior Financial Consultant specializing in 50/30/20",
-            "income": income,
-            "buckets": {"needs": needs, "wants": wants, "savings": savings},
-            "top_categories": top_wants,
-            "goal": "Achieve 20% savings target",
-            "calculated_score": score
+            # === PROFILE INFORMATION ===
+            "user_profile": {
+                "role": "Individual seeking financial optimization using 50/30/20 methodology",
+                "goal": "Achieve optimal 50/30/20 budget allocation",
+                "health_status": health_status
+            },
+            
+            # === FINANCIAL OVERVIEW ===
+            "financial_overview": {
+                "monthly_income": income,
+                "total_tracked_spending": total_categorized,
+                "untracked_amount": uncategorized,
+                "coverage_percentage": (total_categorized / income * 100) if income else 0
+            },
+            
+            # === BUDGET BREAKDOWN (Absolute Amounts) ===
+            "budget_breakdown": {
+                "needs": {
+                    "amount": needs,
+                    "percentage_of_income": round(needs_ratio * 100, 1),
+                    "target_percentage": 50
+                },
+                "wants": {
+                    "amount": wants,
+                    "percentage_of_income": round(wants_ratio * 100, 1),
+                    "target_percentage": 30
+                },
+                "savings": {
+                    "amount": savings,
+                    "percentage_of_income": round(savings_ratio * 100, 1),
+                    "target_percentage": 20
+                }
+            },
+            
+            # === DEVIATION ANALYSIS ===
+            "deviation_analysis": {
+                "needs": {
+                    "deviation_from_target": round(needs_deviation * 100, 1),
+                    "status": "OVER" if needs_deviation > 0 else "UNDER",
+                    "needed_adjustment": round(abs(needs_deviation) * income, 2)
+                },
+                "wants": {
+                    "deviation_from_target": round(wants_deviation * 100, 1),
+                    "status": "OVER" if wants_deviation > 0 else "UNDER",
+                    "needed_adjustment": round(abs(wants_deviation) * income, 2)
+                },
+                "savings": {
+                    "deviation_from_target": round(savings_deviation * 100, 1),
+                    "status": "UNDER" if savings_deviation < 0 else "OVER",
+                    "needed_adjustment": round(abs(savings_deviation) * income, 2)
+                }
+            },
+            
+            # === TOP SPENDING CATEGORIES (for pattern analysis) ===
+            "top_wants_categories": {
+                category: {
+                    "amount": amount,
+                    "percentage_of_wants": round((amount / wants * 100) if wants else 0, 1),
+                    "percentage_of_income": round((amount / income * 100) if income else 0, 1)
+                }
+                for category, amount in list(top_wants.items())[:5]
+            },
+            
+            # === HEALTH SCORE DETAILS ===
+            "health_metrics": {
+                "overall_score": score,
+                "score_out_of": 100,
+                "score_category": health_status,
+                "calculation_method": "Weighted deviation model (Needs: 20%, Wants: 50%, Savings: 60%)"
+            },
+            
+            # === PRIORITIZATION GUIDANCE ===
+            "priority_areas": {
+                "primary_focus": self._determine_priority(needs_deviation, wants_deviation, savings_deviation),
+                "secondary_focus": self._determine_secondary_priority(needs_deviation, wants_deviation, savings_deviation),
+                "improvement_potential": round(((100 - score) / 100) * income, 2)
+            }
         }
-        # Format prompt for the API - ask for advice only, not score
-        prompt = f"I have a financial health score of {score}/100 based on this data: {json.dumps(prompt_payload)}. Provide 3 specific, actionable tips to improve my financial health and reach my savings goal."
+        
+        # === BUILD ENHANCED PROMPT ===
+        # Create a detailed prompt that guides AI to provide specific, actionable feedback
+        prompt = f"""You are an expert financial advisor specializing in the 50/30/20 budgeting methodology.
+
+FINANCIAL PROFILE:
+{json.dumps(prompt_payload, indent=2)}
+
+YOUR TASK:
+Analyze this financial data and provide:
+1. **Current State Assessment**: Describe the user's budget alignment and overall financial health
+2. **Key Findings**: Identify the 2-3 most impactful issues affecting their financial health
+3. **Specific, Actionable Recommendations**: Provide 3-5 concrete steps to improve their budget
+4. **Expected Impact**: Explain how each recommendation would improve their health score
+5. **Quick Wins**: Identify changes they could implement immediately
+6. **Long-term Strategy**: Suggest sustainable habits for maintaining a healthy budget
+
+Focus on:
+- Precise numbers and specific categories to adjust
+- Realistic, achievable goals
+- Root causes of budget imbalances
+- The relationship between their categories and their health score
+
+Format your response with clear headers and bullet points for readability."""
 
         # === USE MODERN GENAI CLIENT API ===
         api_key = os.getenv('GEMINI_API_KEY')
@@ -133,10 +251,16 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         # Initialize the client with API key
         client = genai.Client(api_key=api_key)
         
-        # Generate content using the modern API
+        # Generate content using the modern API with enhanced parameters
         response = client.models.generate_content(
             model='gemini-2.0-flash-exp',
-            contents=prompt
+            contents=prompt,
+            generation_config={
+                "temperature": 0.7,  # Balanced creativity and consistency
+                "top_p": 0.95,        # Diverse but focused responses
+                "top_k": 40,          # Limit vocabulary for coherence
+                "max_output_tokens": 2000  # Allow detailed, comprehensive advice
+            }
         )
         
         # Extract text from response
@@ -154,3 +278,59 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         # Log error and return score with fallback advice
         logging.error(f"AI error: {str(e)}")
         return score, fallback_advice
+
+
+def _determine_priority(needs_deviation, wants_deviation, savings_deviation):
+    """Determine the primary focus area based on deviations.
+    
+    Args:
+        needs_deviation (float): Needs ratio deviation from 50% target
+        wants_deviation (float): Wants ratio deviation from 30% target
+        savings_deviation (float): Savings ratio deviation from 20% target
+        
+    Returns:
+        str: Primary area to focus on
+    """
+    # Prioritize based on severity and impact
+    issues = [
+        ("reduce_needs", abs(needs_deviation), needs_deviation > 0),
+        ("reduce_wants", abs(wants_deviation), wants_deviation > 0),
+        ("increase_savings", abs(savings_deviation), savings_deviation < 0)
+    ]
+    
+    # Sort by deviation magnitude and filter for actual problems
+    critical_issues = [(issue, magnitude) for issue, magnitude, is_problem in issues if is_problem]
+    critical_issues.sort(key=lambda x: x[1], reverse=True)
+    
+    if critical_issues:
+        return critical_issues[0][0]
+    return "optimize_all_categories"
+
+
+def _determine_secondary_priority(needs_deviation, wants_deviation, savings_deviation):
+    """Determine the secondary focus area.
+    
+    Args:
+        needs_deviation (float): Needs ratio deviation from 50% target
+        wants_deviation (float): Wants ratio deviation from 30% target
+        savings_deviation (float): Savings ratio deviation from 20% target
+        
+    Returns:
+        str: Secondary area to focus on
+    """
+    # Build list of areas needing improvement
+    issues = [
+        ("reduce_needs", abs(needs_deviation), needs_deviation > 0),
+        ("reduce_wants", abs(wants_deviation), wants_deviation > 0),
+        ("increase_savings", abs(savings_deviation), savings_deviation < 0)
+    ]
+    
+    # Sort by deviation magnitude and filter for actual problems
+    critical_issues = [(issue, magnitude) for issue, magnitude, is_problem in issues if is_problem]
+    critical_issues.sort(key=lambda x: x[1], reverse=True)
+    
+    if len(critical_issues) > 1:
+        return critical_issues[1][0]
+    elif critical_issues:
+        return critical_issues[0][0]
+    return "maintain_current_balance"
