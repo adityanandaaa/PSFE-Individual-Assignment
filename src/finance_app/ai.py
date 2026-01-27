@@ -111,7 +111,7 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
 
     # Check if any Google GenAI package is available
     if not GENAI_AVAILABLE:
-        logging.warning("No Google GenAI package available; using fallback advice.")
+        logger.warning("No Google GenAI package available; using fallback advice.")
         return score, fallback_advice
 
     try:
@@ -238,10 +238,10 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         # === USE MODERN GENAI CLIENT API ===
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
-            logging.warning("Environment variable GEMINI_API_KEY not set; using fallback advice.")
+            logger.warning("Environment variable GEMINI_API_KEY not set; using fallback advice.")
             return score, fallback_advice
         
-        # Initialize the client with API key
+        # Initialize the client with API key (matches test_async_gemini.py pattern)
         client = genai.Client(api_key=api_key)
         
         # Generate content using the modern API with enhanced parameters
@@ -249,21 +249,26 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
-            generation_config={
-                "temperature": 0.7,  # Balanced creativity and consistency
-                "top_p": 0.95,        # Diverse but focused responses
-                "top_k": 40,          # Limit vocabulary for coherence
-                # Reduce output tokens due to free tier limits while keeping advice useful
-                "max_output_tokens": 300
-            },
+            config=types.GenerateContentConfig(
+                temperature=0.7,  # Balanced creativity and consistency
+                top_p=0.95,        # Diverse but focused responses
+                top_k=40,          # Limit vocabulary for coherence
+                max_output_tokens=300  # Reduce output tokens for free tier
+            ),
             timeout=15.0  # 15-second timeout to prevent indefinite hangs
         )
+        
+        # Check for truncation due to max_output_tokens
+        if hasattr(response, 'candidates') and response.candidates:
+            finish_reason = response.candidates[0].finish_reason
+            if finish_reason == types.FinishReason.MAX_TOKENS:
+                logger.info("AI response truncated at 300 tokens (max_output_tokens limit)")
         
         # Extract text from response
         if response and response.text:
             advice = response.text
         else:
-            logging.warning("Empty response from AI; using fallback advice.")
+            logger.warning("Empty response from AI; using fallback advice.")
             advice = fallback_advice
 
         # === USE AI RESPONSE AS ADVICE ===

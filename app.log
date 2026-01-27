@@ -1,1 +1,4 @@
 2026-01-27 01:33:15 - ERROR - AI error: Models.generate_content() got an unexpected keyword argument 'generation_config'
+2026-01-27 02:00:29 - ERROR - AI request failed, using fallback advice: TypeError
+2026-01-27 02:28:56 - ERROR - AI request failed, using fallback advice: TypeError
+2026-01-27 02:29:37 - ERROR - AI request failed, using fallback advice: TypeError
