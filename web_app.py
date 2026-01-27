@@ -121,7 +121,7 @@ with st.sidebar:
             data=template_data,
             file_name=get_template_filename(),
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            width='stretch'
+            use_container_width=True
         )
     except FileNotFoundError:
         st.error("❌ Template file not found")
@@ -196,7 +196,7 @@ with col1:
                         .apply(highlight_row, axis=1)
                         .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
                     )
-                    st.dataframe(styled, width='stretch', height=400)
+                    st.dataframe(styled, use_container_width=True, height=400)
                 else:
                     # Format Amount to 3 decimal places in preview
                     styled = (
@@ -204,10 +204,10 @@ with col1:
                         .style
                         .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
                     )
-                    st.dataframe(styled, width='stretch', height=400)
+                    st.dataframe(styled, use_container_width=True, height=400)
             
             # Validate and analyze
-            if st.button("🔍 Analyze", width='stretch', disabled=not is_valid):
+            if st.button("🔍 Analyze", use_container_width=True, disabled=not is_valid):
                 with st.spinner("Validating file and analyzing data..."):
                     try:
                         if not is_valid:
@@ -253,21 +253,21 @@ if st.session_state.analysis_done and "analysis_result" in st.session_state:
         st.metric(
             "Needs (50%)",
             f"{currency_symbol}{result['needs']:,.2f}",
-            f"{(result['needs']/income)*100:.1f}% of income"
+            f"📊 {(result['needs']/income)*100:.1f}%"
         )
     
     with col2:
         st.metric(
             "Wants (30%)",
             f"{currency_symbol}{result['wants']:,.2f}",
-            f"{(result['wants']/income)*100:.1f}% of income"
+            f"📊 {(result['wants']/income)*100:.1f}%"
         )
     
     with col3:
         st.metric(
             "Savings (20%)",
             f"{currency_symbol}{result['savings']:,.2f}",
-            f"{(result['savings']/income)*100:.1f}% of income"
+            f"📊 {(result['savings']/income)*100:.1f}%"
         )
     
     # Health Score
@@ -308,13 +308,13 @@ if st.session_state.analysis_done and "analysis_result" in st.session_state:
     if "chart_image" in result:
         st.divider()
         st.subheader("📈 Visual Analysis")
-        st.image(result["chart_image"], width='stretch')
+        st.image(result["chart_image"], use_container_width=True)
     
     # Download PDF report
     st.divider()
     st.subheader("📥 Download Report")
     
-    if st.button("📄 Generate PDF Report", width='stretch'):
+    if st.button("📄 Generate PDF Report", use_container_width=True):
         with st.spinner("Generating PDF report..."):
             try:
                 # Create temporary file for PDF
@@ -342,14 +342,14 @@ if st.session_state.analysis_done and "analysis_result" in st.session_state:
                     data=pdf_data,
                     file_name=get_pdf_filename(),
                     mime="application/pdf",
-                    width='stretch'
+                    use_container_width=True
                 )
                 st.success("✅ PDF generated successfully!")
             except Exception as e:
                 st.error(f"❌ Error generating PDF: {str(e)}")
     
     # Reset button
-    if st.button("🔄 Start New Analysis", width='stretch'):
+    if st.button("🔄 Start New Analysis", use_container_width=True):
         st.session_state.analysis_done = False
         st.session_state.uploaded_file = None
         st.rerun()
