@@ -85,7 +85,7 @@ def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
     return templates[idx]
 
 
-async def get_ai_insights(income, needs, wants, savings, top_wants):
+async def get_ai_insights(income, needs, wants, savings, top_wants, currency='USD'):
     """Get AI advice with health score from our own logic (async).
     
     Uses our mathematical 50/30/20 formula to calculate health score.
@@ -98,6 +98,7 @@ async def get_ai_insights(income, needs, wants, savings, top_wants):
         wants: Total wants spending (30% target)
         savings: Total savings (20% target)
         top_wants: Dict of top spending categories in wants
+        currency: Currency code (e.g., 'USD', 'GBP', 'EUR')
         
     Returns:
         tuple: (score: int [0-100], advice: str with recommendations)
@@ -148,7 +149,8 @@ async def get_ai_insights(income, needs, wants, savings, top_wants):
             "user_profile": {
                 "role": "Individual seeking financial optimization using 50/30/20 methodology",
                 "goal": "Achieve optimal 50/30/20 budget allocation",
-                "health_status": health_status
+                "health_status": health_status,
+                "currency": currency
             },
             
             # === FINANCIAL OVERVIEW ===
@@ -228,11 +230,12 @@ async def get_ai_insights(income, needs, wants, savings, top_wants):
         # Use compact JSON (no spaces) and concise instructions to lower input tokens
         prompt_json = json.dumps(prompt_payload, separators=(",", ":"), ensure_ascii=False)
         prompt = (
-            "You are a 50/30/20 financial advisor. Based on the payload, provide:\n"
+            f"You are a 50/30/20 financial advisor. The user's currency is {currency}. "
+            "Based on the payload, provide:\n"
             "- Current state assessment\n"
             "- 3 specific recommendations with quantified impact\n"
             "- 1 quick win and 1 long-term habit\n"
-            "Respond with clear headers and bullets. Keep it concise.\n"
+            "Use the user's currency for all amounts. Respond with clear headers and bullets. Keep it concise.\n"
             "PAYLOAD:\n" + prompt_json
         )
 
