@@ -113,7 +113,7 @@ with st.sidebar:
     
     # Direct template download
     try:
-        template_path = "Finance Check 50_30_20 Templates.xlsx"
+        template_path = "data/Finance Check 50_30_20 Templates.xlsx"
         with open(template_path, "rb") as f:
             template_data = f.read()
         st.download_button(

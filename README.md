@@ -62,17 +62,21 @@ Shows:
 ## 📁 Project Structure
 
 ```
-├── web_app.py              # Main web application (279 lines)
-├── modules/
-│   ├── logic.py            # Financial calculations
-│   ├── ai.py               # AI insights
-│   ├── pdf_generator.py    # PDF reports
-│   └── config.py           # Configuration
+├── web_app.py              # Main web application
+├── src/
+│   └── finance_app/        # Core package
+│       ├── logic.py        # Financial calculations
+│       ├── ai.py           # AI insights
+│       ├── pdf_generator.py # PDF reports
+│       └── config.py       # Configuration
 ├── data/
-│   └── currencies.json     # 84 currencies
-├── test_app.py             # 41 tests (all passing)
+│   ├── currencies.json     # 84 currencies
+│   └── Finance Check 50_30_20 Templates.xlsx  # Excel template
+├── tests/
+│   └── test_app.py         # 45 tests (all passing)
+├── legacy/                 # Old desktop app code
 ├── requirements.txt        # Dependencies
-├── Finance Check 50_30_20 Templates.xlsx  # Excel template
+├── pyproject.toml          # Package configuration
 └── .env                    # API configuration
 ```
 
@@ -86,13 +90,13 @@ streamlit run web_app.py
 ## 🧪 Testing
 
 ```bash
-# Run all 41 tests
+# Run all 45 tests
 .venv/bin/python -m pytest -v tests/test_app.py
 # or, after activating the venv
 python -m pytest -v tests/test_app.py
 ```
 
-**Status**: ✅ All 41 tests passing (100%)
+**Status**: ✅ All 45 tests passing (100%)
 
 ## 🔧 Requirements
 

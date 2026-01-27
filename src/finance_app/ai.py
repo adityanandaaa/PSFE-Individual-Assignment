@@ -23,6 +23,64 @@ except Exception:
         GENAI_PKG = None
 
 
+def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
+    """Return one of several deterministic fallback messages based on score buckets.
+
+    We keep messages deterministic (no randomness) to aid testing and reproducibility.
+    """
+    needs_pct = needs / income * 100 if income else 0
+    wants_pct = wants / income * 100 if income else 0
+    savings_pct = savings / income * 100 if income else 0
+    top_wants_text = ", ".join(f"{k}: {v/income*100:.1f}%" for k, v in list(top_wants.items())[:3]) if top_wants else "No dominant wants categories"
+
+    templates = [
+        "Based on your 50/30/20 analysis, tighten wants spending and lift savings to reach your 20% target."
+        f" Needs: {needs_pct:.1f}% (50% target), Wants: {wants_pct:.1f}% (30% target), Savings: {savings_pct:.1f}% (20% target).",
+        "Your score shows room to rebalance: trim non-essentials and redirect to savings until you hit 20%."
+        f" Current split — Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "Focus on two actions: reduce wants by 5–10% and move that to savings; keep needs near 50%."
+        f" Snapshot: Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "Bring wants closer to 30% and push savings toward 20%. Start with your top wants categories: "
+        f"{top_wants_text}.",
+        "Solid start. Nudge savings up by trimming the largest wants categories and automate a monthly transfer to savings."
+        f" Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "Good balance. To reach Excellent, aim for Wants ≤30% and Savings ≥20%. Keep Needs near 50%."
+        f" Current: Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "Efficiency tweak: freeze 1–2 discretionary categories for 30 days and divert that amount to savings."
+        f" Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "If income is volatile, pre-commit a fixed savings % on payday and cap wants at 30%."
+        f" Present mix: Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+        "Close the gap by targeting the top 3 wants categories: "
+        f"{top_wants_text}. Reallocate at least half of those amounts to savings.",
+        "Great trajectory. Lock in a minimum 20% savings auto-transfer and keep wants under 30% to maintain an Excellent score."
+        f" Needs {needs_pct:.1f}%, Wants {wants_pct:.1f}%, Savings {savings_pct:.1f}%.",
+    ]
+
+    # Bucket by score to keep advice consistent: lower scores get earlier items, higher scores later.
+    if score < 40:
+        idx = 0
+    elif score < 55:
+        idx = 1
+    elif score < 65:
+        idx = 2
+    elif score < 70:
+        idx = 3
+    elif score < 75:
+        idx = 4
+    elif score < 80:
+        idx = 5
+    elif score < 85:
+        idx = 6
+    elif score < 90:
+        idx = 7
+    elif score < 95:
+        idx = 8
+    else:
+        idx = 9
+
+    return templates[idx]
+
+
 def get_ai_insights(income, needs, wants, savings, top_wants):
     """Get AI advice with health score from our own logic.
     
@@ -46,13 +104,7 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
     
     # === FALLBACK ADVICE ===
     # Used when API is unavailable or fails
-    fallback_advice = (
-        "Based on your 50/30/20 analysis:\n"
-        f"Needs: {needs/income*100:.1f}% (target: 50%)\n"
-        f"Wants: {wants/income*100:.1f}% (target: 30%)\n"
-        f"Savings: {savings/income*100:.1f}% (target: 20%)\n\n"
-        "Focus on aligning your spending with these targets to improve your financial health."
-    )
+    fallback_advice = _build_fallback_advice(score, income, needs, wants, savings, top_wants)
 
     # Check if any Google GenAI package is available
     if genai is None:
