@@ -10,17 +10,16 @@ import re
 import os
 from finance_app.logic import calculate_health_score
 
-# Prefer the newer package if present.
+# Import the modern google-genai package
 try:
-    import google.genai as genai
-    GENAI_PKG = 'genai'
-except Exception:
-    try:
-        import google.generativeai as genai
-        GENAI_PKG = 'generativeai'
-    except Exception:
-        genai = None
-        GENAI_PKG = None
+    from google import genai
+    from google.genai import types
+    GENAI_AVAILABLE = True
+except ImportError:
+    genai = None
+    types = None
+    GENAI_AVAILABLE = False
+    logging.warning("google-genai package not available; AI advice will use fallback mode.")
 
 
 def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
@@ -107,7 +106,7 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
     fallback_advice = _build_fallback_advice(score, income, needs, wants, savings, top_wants)
 
     # Check if any Google GenAI package is available
-    if genai is None:
+    if not GENAI_AVAILABLE:
         logging.warning("No Google GenAI package available; using fallback advice.")
         return score, fallback_advice
 
@@ -125,64 +124,30 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         # Format prompt for the API - ask for advice only, not score
         prompt = f"I have a financial health score of {score}/100 based on this data: {json.dumps(prompt_payload)}. Provide 3 specific, actionable tips to improve my financial health and reach my savings goal."
 
-        # === ATTEMPT MODERN GENAI CLIENT ===
-        if GENAI_PKG == 'genai':
-            # Preferred modern client access: genai.Client().generate(...)
-            client_cls = getattr(genai, 'Client', None)
-            if client_cls:
-                # Initialize client and attempt to generate response
-                client = client_cls()
-                # Try modern argument name first ('input'), fallback to 'prompt'
-                try:
-                    resp = client.generate(model="gemini-2.5-flash", input=prompt)
-                except TypeError:
-                    # Older genai versions might use 'text' or 'prompt' argument
-                    resp = client.generate(model="gemini-2.5-flash", prompt=prompt)
-
-                # Extract text from response (structure varies by version)
-                if hasattr(resp, 'candidates') and resp.candidates:
-                    # candidate objects often have 'output' or 'content'
-                    first = resp.candidates[0]
-                    text = getattr(first, 'output', None) or getattr(first, 'content', None) or str(first)
-                else:
-                    # Try direct text attributes
-                    text = getattr(resp, 'output', None) or getattr(resp, 'text', None) or str(resp)
-
-            elif hasattr(genai, 'configure'):
-                # Fallback for older genai releases that expose configure + GenerativeModel
-                api_key = os.getenv('GEMINI_API_KEY')
-                if api_key:
-                    try:
-                        genai.configure(api_key=api_key)
-                    except Exception as e:
-                        logging.warning(f"genai.configure failed: {e}")
-                else:
-                    logging.warning("Environment variable GEMINI_API_KEY not set; genai may not be configured.")
-                
-                model = genai.GenerativeModel('gemini-2.5-flash')
-                response = model.generate_content(prompt)
-                text = getattr(response, 'text', str(response))
-            else:
-                raise RuntimeError("Unsupported genai client interface")
+        # === USE MODERN GENAI CLIENT API ===
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            logging.warning("Environment variable GEMINI_API_KEY not set; using fallback advice.")
+            return score, fallback_advice
+        
+        # Initialize the client with API key
+        client = genai.Client(api_key=api_key)
+        
+        # Generate content using the modern API
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp',
+            contents=prompt
+        )
+        
+        # Extract text from response
+        if response and response.text:
+            advice = response.text
         else:
-            # === FALLBACK TO DEPRECATED PACKAGE ===
-            # Use the older (deprecated) google.generativeai package
-            api_key = os.getenv('GEMINI_API_KEY')
-            if api_key:
-                try:
-                    genai.configure(api_key=api_key)
-                except Exception as e:
-                    logging.warning(f"genai.configure failed: {e}")
-            else:
-                logging.warning("Environment variable GEMINI_API_KEY not set; genai may not be configured.")
-            
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            response = model.generate_content(prompt)
-            text = getattr(response, 'text', str(response))
+            logging.warning("Empty response from AI; using fallback advice.")
+            advice = fallback_advice
 
         # === USE AI RESPONSE AS ADVICE ===
         # Return our calculated score with AI-generated advice
-        advice = text
         return score, advice
 
     except Exception as e:
