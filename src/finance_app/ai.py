@@ -245,18 +245,11 @@ async def get_ai_insights(income, needs, wants, savings, top_wants):
         # Initialize the client with API key (matches test_async_gemini.py pattern)
         client = genai.Client(api_key=api_key)
         
-        # Generate content using the modern async API with enhanced parameters
-        # Use client.aio.models.generate_content for async calls
+        # Generate content using the modern async API
+        # Note: async API uses simpler signature - config params handled differently
         response = await client.aio.models.generate_content(
             model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7,  # Balanced creativity and consistency
-                top_p=0.95,        # Diverse but focused responses
-                top_k=40,          # Limit vocabulary for coherence
-                max_output_tokens=300  # Reduce output tokens for free tier
-            ),
-            timeout=15.0  # 15-second timeout to prevent indefinite hangs
+            contents=prompt
         )
         
         # Check for truncation due to max_output_tokens

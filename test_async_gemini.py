@@ -52,7 +52,7 @@ async def test_async_deprecated():
         # This example may not work depending on package version
         resp = await genai.chat_async(
             model="chat-bison-001",
-            messages=[{"role": "user", "content": "Hello world"}]
+            messages=[{"role": "user", "content": "Hello world bro, what's up? how you old are you?, please answer in more than 5 words."}]
         )
         print(f"✓ Response: {resp.last.content}")
         return True
@@ -75,7 +75,7 @@ async def test_async_modern():
         # Use the correct async method
         response = await client.aio.models.generate_content(
             model="gemini-2.5-flash",
-            contents="Hello world"
+            contents="Hello world bro, what's up? how you old are you?, please answer in more than 5 words.Hello world"
         )
         
         print(f"✓ Response: {response.text}")

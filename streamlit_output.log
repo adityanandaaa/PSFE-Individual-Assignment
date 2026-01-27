@@ -10,3 +10,7 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to fals
 
 2026-01-27 02:28:56 - ERROR - AI request failed, using fallback advice: TypeError
 2026-01-27 02:29:37 - ERROR - AI request failed, using fallback advice: TypeError
+2026-01-27 02:32:09 - ERROR - AI request failed, using fallback advice: TypeError
+2026-01-27 02:35:11.535 Received event for non-watched file: /Users/macbookairm3/Finance_Health_Check/web_app.py
+2026-01-27 02:38:07 - ERROR - AI request failed, using fallback advice: TypeError
+2026-01-27 02:43:18 - ERROR - AI request failed, using fallback advice: TypeError
