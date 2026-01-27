@@ -108,7 +108,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         pd.DataFrame(data).to_excel(bad_file, index=False)
         valid, errors = validate_file(bad_file)
         self.assertFalse(valid)
-        self.assertTrue(any('Invalid amount' in e for e in errors))
+        self.assertTrue(any('Invalid amount' in msg for _, msg in errors))
         os.remove(bad_file)
 
     def test_top_wants_limit(self):
@@ -277,7 +277,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         pd.DataFrame(data).to_excel(bad_file, index=False)
         valid, errors = validate_file(bad_file)
         self.assertFalse(valid)
-        self.assertTrue(any('Invalid name' in e for e in errors))
+        self.assertTrue(any('Invalid name' in msg for _, msg in errors))
         os.remove(bad_file)
 
     def test_validate_file_invalid_date_format(self):
@@ -293,7 +293,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         pd.DataFrame(data).to_excel(bad_file, index=False)
         valid, errors = validate_file(bad_file)
         self.assertFalse(valid)
-        self.assertTrue(any('Invalid date format' in e for e in errors))
+        self.assertTrue(any('Invalid date format' in msg for _, msg in errors))
         os.remove(bad_file)
 
     def test_validate_file_accepts_dash_format_dates(self):
@@ -325,7 +325,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         pd.DataFrame(data).to_excel(bad_file, index=False)
         valid, errors = validate_file(bad_file)
         self.assertFalse(valid)
-        self.assertTrue(any('Invalid category' in e for e in errors))
+        self.assertTrue(any('Invalid category' in msg for _, msg in errors))
         os.remove(bad_file)
 
     def test_validate_file_accepts_datetime_objects(self):

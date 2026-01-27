@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 import os
+import re
 import tempfile
 from dotenv import load_dotenv
 
@@ -13,8 +14,38 @@ from finance_app.config import get_pdf_filename, get_template_filename, DOWNLOAD
 # Load environment variables
 load_dotenv()
 
+# Constants
+MAX_FILE_SIZE_MB = 5
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+# Cached functions for performance
+@st.cache_data
+def get_currencies_data():
+    """Cached wrapper for loading currencies."""
+    return load_currencies()
+
+@st.cache_data
+def parse_and_validate_file(file_bytes):
+    """Parse and validate Excel file with caching.
+    
+    Returns:
+        tuple: (is_valid, validation_result, preview_df)
+    """
+    # Single read operation for both validation and preview
+    is_valid, validation_result = validate_file(BytesIO(file_bytes))
+    
+    # Create preview DataFrame
+    try:
+        preview_df = pd.read_excel(BytesIO(file_bytes))
+        if 'Amount' in preview_df.columns:
+            preview_df['Amount'] = pd.to_numeric(preview_df['Amount'], errors='coerce')
+    except Exception:
+        preview_df = None
+    
+    return is_valid, validation_result, preview_df
+
 # Load currencies from JSON
-currencies = load_currencies()
+currencies = get_currencies_data()
 currency_codes = [c['code'] for c in currencies]
 currency_symbols = {c['code']: c['symbol'] for c in currencies}
 
@@ -148,92 +179,79 @@ with col1:
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
             
-            # Read file bytes once for preview and validation
+            # Get file bytes
             file_bytes = uploaded_file.getvalue()
+            file_size_mb = len(file_bytes) / (1024 * 1024)
             
-            # Preview table
-            try:
-                df_preview = pd.read_excel(BytesIO(file_bytes))
-                # Ensure Amount is numeric for consistent formatting in preview
-                if 'Amount' in df_preview.columns:
-                    df_preview['Amount'] = pd.to_numeric(df_preview['Amount'], errors='coerce')
-                st.subheader("👀 Preview (first 50 rows)")
-            except Exception as e:
-                st.error(f"❌ Unable to preview file: {str(e)}")
-                df_preview = None
-            
-            # Validate to gather errors and pass to analysis later
-            error_rows = set()
-            is_valid = False
-            validation_result = None
-            try:
-                is_valid, validation_result = validate_file(BytesIO(file_bytes))
+            # Validate file size
+            if len(file_bytes) > MAX_FILE_SIZE_BYTES:
+                st.error(f"❌ File too large! Maximum size is {MAX_FILE_SIZE_MB}MB. Your file is {file_size_mb:.2f}MB.")
+            else:
+                # Use cached parsing and validation function
+                is_valid, validation_result, df_preview = parse_and_validate_file(file_bytes)
+                
+                # Display validation results
                 if not is_valid and validation_result:
-                    # Parse row numbers from error messages
-                    import re
-                    row_nums = []
-                    for msg in validation_result:
-                        m = re.search(r"Row (\d+)", msg)
-                        if m:
-                            row_nums.append(int(m.group(1)))
-                    error_rows = set(row_nums)
-                    st.error(f"❌ Validation Error: {', '.join(validation_result)}")
+                    # Extract row numbers and messages from structured errors
+                    error_rows = {row_num for row_num, _ in validation_result}
+                    error_messages = [f"Row {row_num}: {msg}" if row_num > 0 else msg 
+                                    for row_num, msg in validation_result]
+                    st.error(f"❌ Validation Error: {', '.join(error_messages)}")
                 elif is_valid:
                     st.success("✅ File validated successfully!")
-            except Exception as e:
-                st.error(f"❌ Error validating file: {str(e)}")
-            
-            # Show preview with highlighted error rows
-            if df_preview is not None:
-                if error_rows:
-                    st.info("Rows highlighted in red have validation issues.")
-                    def highlight_row(row):
-                        return ['background-color: #ffe6e6' if (row.name + 1) in error_rows else '' for _ in row]
-                    # Format Amount to 3 decimal places in preview
-                    styled = (
-                        df_preview.head(50)
-                        .style
-                        .apply(highlight_row, axis=1)
-                        .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
-                    )
-                    st.dataframe(styled, use_container_width=True, height=400)
-                else:
-                    # Format Amount to 3 decimal places in preview
-                    styled = (
-                        df_preview.head(50)
-                        .style
-                        .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
-                    )
-                    st.dataframe(styled, use_container_width=True, height=400)
-            
-            # Validate and analyze
-            if st.button("🔍 Analyze", use_container_width=True, disabled=not is_valid):
-                with st.spinner("Validating file and analyzing data..."):
-                    try:
-                        if not is_valid:
-                            st.error("❌ Please fix validation errors before analysis.")
-                        else:
-                            # validation_result is validated DataFrame
-                            needs, wants, savings, top_wants = analyze_data(validation_result, income)
-                            
-                            # Calculate health score
-                            health_score = calculate_health_score(income, needs, wants, savings)
-                            
-                            # Generate AI insights
-                            score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
-                            
-                            st.session_state.analysis_done = True
-                            st.session_state.analysis_result = {
-                                'needs': needs,
-                                'wants': wants,
-                                'savings': savings,
-                                'top_wants': top_wants
-                            }
-                            st.session_state.health_score = health_score
-                            st.session_state.advice = advice
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Error: {str(e)}")
+                
+                # Show preview if available
+                if df_preview is not None:
+                    st.subheader("👀 Preview (first 50 rows)")
+                    if error_rows:
+                        st.info("Rows highlighted in red have validation issues.")
+                        def highlight_row(row):
+                            return ['background-color: #ffe6e6' if (row.name + 1) in error_rows else '' for _ in row]
+                        # Format Amount to 3 decimal places in preview
+                        styled = (
+                            df_preview.head(50)
+                            .style
+                            .apply(highlight_row, axis=1)
+                            .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
+                        )
+                        st.dataframe(styled, use_container_width=True, height=400)
+                    else:
+                        # Format Amount to 3 decimal places in preview
+                        styled = (
+                            df_preview.head(50)
+                            .style
+                            .format({'Amount': lambda x: f"{x:.2f}" if pd.notnull(x) else ''})
+                        )
+                        st.dataframe(styled, use_container_width=True, height=400)
+                
+                # Validate and analyze
+                if st.button("🔍 Analyze", use_container_width=True, disabled=not is_valid):
+                    with st.spinner("Validating file and analyzing data..."):
+                        try:
+                            if not is_valid:
+                                st.error("❌ Please fix validation errors before analysis.")
+                            else:
+                                # validation_result is validated DataFrame
+                                needs, wants, savings, top_wants = analyze_data(validation_result, income)
+                                
+                                # Calculate health score
+                                health_score = calculate_health_score(income, needs, wants, savings)
+                                
+                                # Generate AI insights
+                                score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
+                                
+                                st.session_state.analysis_done = True
+                                st.session_state.analysis_result = {
+                                    'needs': needs,
+                                    'wants': wants,
+                                    'savings': savings,
+                                    'top_wants': top_wants
+                                }
+                                st.session_state.health_score = health_score
+                                st.session_state.advice = advice
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)}")
 
 with col2:
     st.subheader("📋 Income Summary")
