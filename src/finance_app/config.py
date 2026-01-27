@@ -3,7 +3,8 @@ from datetime import datetime
 
 # === FILE PATHS ===
 # Path to currencies data file (supports multiple currencies)
-CURRENCIES_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'currencies.json')
+# Point to project-level data/currencies.json (src/finance_app → project root → data)
+CURRENCIES_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'currencies.json')
 
 # Log file for application events
 LOG_FILE = 'app.log'

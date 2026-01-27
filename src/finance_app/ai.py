@@ -8,7 +8,7 @@ import json
 import logging
 import re
 import os
-from modules.logic import calculate_health_score
+from finance_app.logic import calculate_health_score
 
 # Prefer the newer package if present.
 try:

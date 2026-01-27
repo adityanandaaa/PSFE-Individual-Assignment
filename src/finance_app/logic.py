@@ -2,7 +2,7 @@ import pandas as pd
 import json
 import logging
 from datetime import datetime
-from modules.config import CURRENCIES_FILE
+from finance_app.config import CURRENCIES_FILE
 
 def load_currencies():
     """Load currencies from JSON file."""
@@ -56,12 +56,19 @@ def validate_file(file_path):
                 data.append(row)
         
         df = pd.DataFrame(data, columns=headers)
+
+        # Normalize: keep only required columns, drop fully empty rows
+        required_cols = ['Date', 'Name', 'Type', 'Amount', 'Category']
+        # Remove rows where all required fields are empty/NaN/whitespace
+        df = (
+            df[required_cols]
+            .replace(r'^\s*$', pd.NA, regex=True)
+            .dropna(how='all')
+            .reset_index(drop=True)
+        )
         wb.close()  # Explicitly close the workbook to release file lock
         
         errors = []
-        
-        # Define required column names for the financial tracker
-        required_cols = ['Date', 'Name', 'Type', 'Amount', 'Category']
         
         # Check if all required columns exist
         if not all(col in df.columns for col in required_cols):
@@ -73,10 +80,22 @@ def validate_file(file_path):
             if pd.isna(row['Date']):
                 errors.append(f"Row {idx+1}: Date is empty.")
             else:
-                # Validate date format (expects dd/mm/yyyy)
+                # Accept Excel datetime serials or datetime/Timestamp objects as-is
+                date_val = row['Date']
                 try:
-                    datetime.strptime(str(row['Date']), '%d/%m/%Y')
-                except ValueError:
+                    if isinstance(date_val, (datetime, pd.Timestamp)):
+                        parsed_date = pd.to_datetime(date_val, errors='coerce')
+                    elif isinstance(date_val, (int, float)):
+                        # Excel serial dates are numeric; let pandas convert
+                        parsed_date = pd.to_datetime(date_val, errors='coerce', unit='D', origin='1899-12-30')
+                    else:
+                        # For strings, enforce dd/mm/YYYY (with slash or dash)
+                        parsed_date = pd.to_datetime(date_val, errors='coerce', format='%d/%m/%Y')
+                        if pd.isna(parsed_date):
+                            parsed_date = pd.to_datetime(date_val, errors='coerce', format='%d-%m-%Y')
+                    if pd.isna(parsed_date):
+                        errors.append(f"Row {idx+1}: Invalid date format.")
+                except Exception:
                     errors.append(f"Row {idx+1}: Invalid date format.")
             
             # === NAME VALIDATION ===
@@ -91,8 +110,9 @@ def validate_file(file_path):
             
             # === AMOUNT VALIDATION ===
             try:
-                # Convert amount to float for numeric validation
-                amt = float(row['Amount'])
+                # Convert amount to float for numeric validation (allow commas)
+                amt_str = str(row['Amount']).replace(',', '')
+                amt = float(amt_str)
                 # Amount must be positive
                 if amt <= 0:
                     errors.append(f"Row {idx+1}: Invalid amount.")

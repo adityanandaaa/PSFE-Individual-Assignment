@@ -4,11 +4,11 @@ This project has been converted from a desktop Tkinter app to a Streamlit web ap
 
 ## Files No Longer Used (Available for Reference)
 
-The following files are from the previous desktop implementation and are **no longer required** for running the app. They are kept in the repository for reference:
+The following files are from the previous desktop implementation and are **no longer required** for running the app. They are kept in the repository under the `legacy/` folder for reference:
 
-- `app.py` - Legacy Tkinter main entry point (replaced by `web_app.py`)
-- `modules/ui.py` - Legacy Tkinter UI module (functionality now in `web_app.py`)
-- `setup.py` - Legacy PyInstaller packaging script (no longer needed for web app)
+- `legacy/app.py` - Legacy Tkinter main entry point (replaced by `web_app.py`)
+- `legacy/modules/ui.py` - Legacy Tkinter UI module (functionality now in `web_app.py`)
+- `legacy/setup.py` - Legacy PyInstaller packaging script (no longer needed for web app)
 
 ## Current Entry Point
 

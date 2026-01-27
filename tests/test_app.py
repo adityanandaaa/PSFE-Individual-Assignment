@@ -22,13 +22,15 @@ To run tests:
 
 import unittest
 import os
+import sys
+from pathlib import Path
 import json
 import pandas as pd
 from unittest.mock import patch, MagicMock, mock_open, call
 import tempfile
-from modules.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data, calculate_health_score
-from modules.ai import get_ai_insights
-from modules.pdf_generator import generate_pdf
+from finance_app.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data, calculate_health_score
+from finance_app.ai import get_ai_insights
+from finance_app.pdf_generator import generate_pdf
 
 class TestFinancialHealthChecker(unittest.TestCase):
 
@@ -183,7 +185,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertIsInstance(advice, str)
 
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
-    @patch('modules.ai.genai')
+    @patch('finance_app.ai.genai')
     def test_ai_with_mock_response(self, mock_genai):
         """Test AI insights with mocked response from GenerativeModel."""
         # Mock the GenerativeModel().generate_content() response
@@ -203,7 +205,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         # Advice might be mocked string or our fallback, both are OK
         self.assertTrue(isinstance(advice, str) or hasattr(advice, '__call__'))
 
-    @patch('modules.ai.genai')
+    @patch('finance_app.ai.genai')
     def test_ai_with_generativemodel_mock(self, mock_genai):
         """Test AI insights with mocked GenerativeModel interface (fallback)."""
         # Mock the GenerativeModel().generate_content() response
@@ -238,7 +240,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertEqual(score, 100)
         self.assertIsInstance(advice, str)
 
-    @patch('modules.ai.genai')
+    @patch('finance_app.ai.genai')
     def test_ai_handles_network_error(self, mock_genai):
         """Test that AI gracefully handles network errors and still returns score."""
         # Mock a network error in Client initialization
@@ -294,6 +296,22 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertTrue(any('Invalid date format' in e for e in errors))
         os.remove(bad_file)
 
+    def test_validate_file_accepts_dash_format_dates(self):
+        """Test that dd-mm-YYYY date strings are accepted."""
+        dash_file = "dash_date.xlsx"
+        data = {
+            'Date': ['01-01-2026', '02-01-2026'],  # dd-mm-YYYY should be valid
+            'Name': ['Rent', 'Groceries'],
+            'Type': ['Needs', 'Needs'],
+            'Amount': [1000.00, 200.00],
+            'Category': ['Housing', 'Food']
+        }
+        pd.DataFrame(data).to_excel(dash_file, index=False)
+        valid, df = validate_file(dash_file)
+        self.assertTrue(valid)
+        self.assertIsInstance(df, pd.DataFrame)
+        os.remove(dash_file)
+
     def test_validate_file_invalid_category(self):
         """Test file validation with invalid category (empty)."""
         bad_file = "invalid_category.xlsx"
@@ -309,6 +327,22 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertFalse(valid)
         self.assertTrue(any('Invalid category' in e for e in errors))
         os.remove(bad_file)
+
+    def test_validate_file_accepts_datetime_objects(self):
+        """Test that datetime/Timestamp dates are accepted."""
+        dt_file = "datetime_dates.xlsx"
+        data = {
+            'Date': [pd.Timestamp('2026-01-01'), pd.Timestamp('2026-01-02')],
+            'Name': ['Rent', 'Groceries'],
+            'Type': ['Needs', 'Needs'],
+            'Amount': [1000.00, 200.00],
+            'Category': ['Housing', 'Food']
+        }
+        pd.DataFrame(data).to_excel(dt_file, index=False)
+        valid, df = validate_file(dt_file)
+        self.assertTrue(valid)
+        self.assertIsInstance(df, pd.DataFrame)
+        os.remove(dt_file)
 
     def test_analyze_data_with_mixed_types(self):
         """Test analyze_data with all three spending types (Needs, Wants, Savings)."""
@@ -328,6 +362,27 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertEqual(wants, 200)
         self.assertEqual(savings, 500)
         os.remove(mixed_file)
+
+    def test_validate_file_parses_amounts_with_commas(self):
+        """Test that amounts with commas are parsed correctly."""
+        comma_file = "comma_amounts.xlsx"
+        data = {
+            'Date': ['1/1/2026', '2/1/2026'],
+            'Name': ['Rent', 'Groceries'],
+            'Type': ['Needs', 'Needs'],
+            'Amount': ['1,000.50', '200'],  # Strings with comma
+            'Category': ['Housing', 'Food']
+        }
+        pd.DataFrame(data).to_excel(comma_file, index=False)
+        valid, df = validate_file(comma_file)
+        self.assertTrue(valid)
+        self.assertIsInstance(df, pd.DataFrame)
+        # Verify amounts can be normalized by removing commas
+        amt0 = float(str(df.loc[0, 'Amount']).replace(',', ''))
+        amt1 = float(str(df.loc[1, 'Amount']).replace(',', ''))
+        self.assertAlmostEqual(amt0, 1000.50, places=2)
+        self.assertAlmostEqual(amt1, 200.00, places=2)
+        os.remove(comma_file)
 
     def test_analyze_data_category_lowercasing(self):
         """Test that analyze_data correctly lowercases categories."""
@@ -382,9 +437,9 @@ class TestFinancialHealthChecker(unittest.TestCase):
         # None as currency code
         self.assertIsNone(get_currency_symbol(self.currencies, None))
 
-    @patch('modules.pdf_generator.generate_pie_chart')
-    @patch('modules.pdf_generator.generate_category_chart')
-    @patch('modules.pdf_generator.generate_bar_chart')
+    @patch('finance_app.pdf_generator.generate_pie_chart')
+    @patch('finance_app.pdf_generator.generate_category_chart')
+    @patch('finance_app.pdf_generator.generate_bar_chart')
     def test_pdf_generation_calls_all_charts(self, mock_bar, mock_pie, mock_category):
         """Test that PDF generation calls all three chart functions."""
         # Create actual temporary image files with minimal PNG data (1x1 transparent pixel)
@@ -424,9 +479,9 @@ class TestFinancialHealthChecker(unittest.TestCase):
                 if os.path.exists(f):
                     os.remove(f)
 
-    @patch('modules.pdf_generator.generate_pie_chart')
-    @patch('modules.pdf_generator.generate_category_chart')
-    @patch('modules.pdf_generator.generate_bar_chart')
+    @patch('finance_app.pdf_generator.generate_pie_chart')
+    @patch('finance_app.pdf_generator.generate_category_chart')
+    @patch('finance_app.pdf_generator.generate_bar_chart')
     def test_pdf_generation_with_different_currencies(self, mock_bar, mock_pie, mock_category):
         """Test PDF generation with various currency symbols."""
         # Create actual PNG data (1x1 transparent pixel)
@@ -463,7 +518,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
     def test_download_template_creates_valid_file(self):
         """Test that template Excel file creation works with correct structure."""
         import pandas as pd
-        from modules.config import DOWNLOADS_PATH, TEMPLATE_FILE
+        from finance_app.config import DOWNLOADS_PATH, TEMPLATE_FILE
         
         # Create template directly (same code as download_template)
         data = {
@@ -554,6 +609,23 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertEqual(len(result), 0)
         os.remove(empty_file)
 
+    def test_validate_file_drops_fully_empty_rows(self):
+        """Test validator drops rows where all required fields are empty."""
+        drop_file = "drop_empty_rows.xlsx"
+        data = {
+            'Date': ['1/1/2026', None],
+            'Name': ['Rent', None],
+            'Type': ['Needs', None],
+            'Amount': [1000.00, None],
+            'Category': ['Housing', None]
+        }
+        pd.DataFrame(data).to_excel(drop_file, index=False)
+        valid, df = validate_file(drop_file)
+        self.assertTrue(valid)
+        # Only the first row should remain after dropping fully empty rows
+        self.assertEqual(len(df), 1)
+        os.remove(drop_file)
+
     def test_income_validation_boundary_cases(self):
         """Test income validation with boundary and special values."""
         # Very small positive income
@@ -631,9 +703,9 @@ class TestStreamlitIntegration(unittest.TestCase):
             category_file.write(png_data)
             category_file.close()
             
-            with patch('modules.pdf_generator.generate_bar_chart', return_value=bar_file.name), \
-                 patch('modules.pdf_generator.generate_pie_chart', return_value=pie_file.name), \
-                 patch('modules.pdf_generator.generate_category_chart', return_value=category_file.name):
+            with patch('finance_app.pdf_generator.generate_bar_chart', return_value=bar_file.name), \
+                 patch('finance_app.pdf_generator.generate_pie_chart', return_value=pie_file.name), \
+                 patch('finance_app.pdf_generator.generate_category_chart', return_value=category_file.name):
                 
                 generate_pdf(pdf_path, 1230, '£', 1000, 200, 30, 
                            pd.Series({'entertainment': 30}), 85, "Good financial health")

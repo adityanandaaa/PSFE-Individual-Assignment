@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import tempfile
 import os
 from reportlab.lib.pagesizes import letter
@@ -35,6 +36,9 @@ def generate_bar_chart(needs, wants, savings, income, symbol):
     plt.title('Spending vs Targets')
     plt.ylabel(f'Amount ({symbol})')
     plt.legend()
+    # Format y-axis ticks to two decimals
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     
     # Save to temporary file and close plot
     tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
@@ -61,7 +65,8 @@ def generate_pie_chart(needs, wants, savings):
     
     # Create pie chart with percentage labels
     plt.figure(figsize=(6, 6))
-    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+    # Show percentages with two decimals
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.2f%%', startangle=140)
     plt.title('Expense Breakdown')
     plt.axis('equal')  # Ensure pie is circular
     
@@ -95,6 +100,9 @@ def generate_category_chart(top_wants, symbol):
     plt.ylabel(f'Amount ({symbol})')
     plt.xticks(rotation=45)  # Rotate labels for better readability
     plt.tight_layout()
+    # Format y-axis ticks to two decimals
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     
     # Save to temporary file and close plot
     tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
@@ -123,14 +131,14 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
     story = []
     
     # === HEADER ===
-    story.append(Paragraph(f"Financial Health Report - Income: {symbol}{income}", styles['Heading1']))
+    story.append(Paragraph(f"Financial Health Report - Income: {symbol}{income:,.2f}", styles['Heading1']))
     story.append(Spacer(1, 12))
     
     # === BUDGET SUMMARY ===
     # Display actual spending vs 50/30/20 targets
-    story.append(Paragraph(f"Needs: {symbol}{needs:.2f} (50% target: {symbol}{income*0.5:.2f})", styles['Normal']))
-    story.append(Paragraph(f"Wants: {symbol}{wants:.2f} (30% target: {symbol}{income*0.3:.2f})", styles['Normal']))
-    story.append(Paragraph(f"Savings: {symbol}{savings:.2f} (20% target: {symbol}{income*0.2:.2f})", styles['Normal']))
+    story.append(Paragraph(f"Needs: {symbol}{needs:,.2f} (50% target: {symbol}{income*0.5:,.2f})", styles['Normal']))
+    story.append(Paragraph(f"Wants: {symbol}{wants:,.2f} (30% target: {symbol}{income*0.3:,.2f})", styles['Normal']))
+    story.append(Paragraph(f"Savings: {symbol}{savings:,.2f} (20% target: {symbol}{income*0.2:,.2f})", styles['Normal']))
     story.append(Spacer(1, 12))
     
     # === AI INSIGHTS ===

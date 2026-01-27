@@ -1,53 +1,113 @@
 # Finance Check 50/30/20
 
-A web application for analyzing personal finances using the 50/30/20 budgeting framework. Built with Streamlit for easy localhost deployment. It validates expense data from Excel files, provides AI-driven insights, and generates professional PDF reports with charts.
+A modern web application for analyzing personal finances using the 50/30/20 budgeting framework. Built with Streamlit - no .exe installation needed, just run a simple command.
 
-## Features
+## 🚀 Quick Start (3 Steps)
 
-- **Income and Currency Input**: Enter monthly net income and select currency.
-- **Excel File Validation**: Upload and validate expense data with detailed error feedback.
-- **50/30/20 Analysis**: Automatically categorize and analyze spending against targets.
-- **Health Score**: Get a deterministic financial health score (0-100) based on mathematical formula, independent of AI services.
-- **AI Insights**: Get personalized financial advice from Gemini AI (with fallback).
-- **PDF Reports**: Generate comprehensive reports with bar charts, pie charts, top categories, health score, and advice.
-- **Template Download**: Download a sample Excel template for easy data entry.
+```bash
+# 1. Navigate to project
+cd /Users/macbookairm3/new_python_project
 
-## Project Structure
+# 2. Activate virtual environment
+source .venv/bin/activate
+
+# 3. Run the app
+streamlit run web_app.py
+```
+
+Opens at: **http://localhost:8501**
+
+## ✨ Features
+
+- **💱 84 Currencies**: Select from 84 countries
+- **📁 File Upload**: Validate Excel files with your spending data
+- **📊 Budget Analysis**: Automatic Needs/Wants/Savings breakdown
+- **💪 Health Score**: Financial health score (0-100) with color coding
+- **🤖 AI Advice**: Personalized financial recommendations from Google Gemini
+- **📈 Visualizations**: Interactive charts showing budget breakdown
+- **📥 PDF Reports**: Download comprehensive financial health reports
+
+## 📋 How to Use
+
+### 1. Select Currency
+- Click dropdown → choose from 84 currencies
+- Format: "CODE - Symbol" (e.g., USD - $)
+
+### 2. Upload Excel File
+- Click "Upload Excel File"
+- Select your spending data
+- App validates automatically
+
+### 3. Review Analysis
+Shows:
+- **Needs (50%)**: Essential expenses
+- **Wants (30%)**: Discretionary spending  
+- **Savings (20%)**: Money to save
+
+### 4. Check Health Score
+- Score from 0-100
+- Color-coded (Poor/Fair/Good/Excellent)
+- See % of income in each category
+
+### 5. Get AI Advice
+- Personalized financial recommendations
+- Based on your budget data
+- Actionable insights
+
+### 6. Download PDF Report
+- Click "Generate PDF Report"
+- Complete financial health report
+- Includes charts, metrics, and advice
+
+## 📁 Project Structure
 
 ```
-.
-├── web_app.py             # Streamlit web app entry point
+├── web_app.py              # Main web application (279 lines)
 ├── modules/
-│   ├── config.py          # Configuration constants
-│   ├── logic.py           # Data validation and analysis
-│   ├── ai.py              # AI integration
-│   └── pdf_generator.py   # Chart and PDF generation
+│   ├── logic.py            # Financial calculations
+│   ├── ai.py               # AI insights
+│   ├── pdf_generator.py    # PDF reports
+│   └── config.py           # Configuration
 ├── data/
-│   └── currencies.json    # Currency data
-├── test_app.py            # Unit tests
-├── requirements.md        # Detailed requirements
-└── README.md              # This file
+│   └── currencies.json     # 84 currencies
+├── test_app.py             # 41 tests (all passing)
+├── requirements.txt        # Dependencies
+├── Finance Check 50_30_20 Templates.xlsx  # Excel template
+└── .env                    # API configuration
 ```
 
-## Installation
+## 📦 Installation
 
-1. Clone the repository.
-2. Install dependencies: `pip install -r requirements.txt`
-3. Create a `.env` file with your Google Gemini API key:
-   ```
-## Running the App
-
-The web app runs locally at `http://localhost:8501`:
-
+Already done! Virtual environment and dependencies are set up. Just run:
 ```bash
 streamlit run web_app.py
 ```
 
-Then open your browser to the provided URL.
+## 🧪 Testing
 
-## Usage
+```bash
+# Run all 41 tests
+.venv/bin/python -m pytest -v tests/test_app.py
+# or, after activating the venv
+python -m pytest -v tests/test_app.py
+```
 
-1. Enter your monthly net income and select currency.
+**Status**: ✅ All 41 tests passing (100%)
+
+## 🔧 Requirements
+
+- **Python 3.9+**
+- **Streamlit 1.28+**
+- **Virtual environment** (already created)
+- **.env file** with Google Gemini API key
+
+## 📝 File Format
+
+Use the provided Excel template. Include:
+- Spending categories in rows
+- Amounts as numbers (not text)
+- Consistent date ranges
+- All major expense categories
 2. Download the template or use your own Excel file with columns: Date, Name, Type, Amount, Category.
 3. Upload the file and analyze.
 4. View your 50/30/20 breakdown, health score, and AI advice.
