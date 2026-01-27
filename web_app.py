@@ -104,7 +104,11 @@ def parse_and_validate_file(file_bytes):
         # Ensure Amount column is numeric for proper formatting
         if 'Amount' in preview_df.columns:
             preview_df['Amount'] = pd.to_numeric(preview_df['Amount'], errors='coerce')
-    except Exception:
+    except (ValueError, KeyError, IOError) as e:
+        logger.error(f"Failed to read Excel preview: {type(e).__name__}")
+        preview_df = None
+    except Exception as e:
+        logger.error(f"Unexpected error reading Excel: {type(e).__name__}")
         preview_df = None
     
     return is_valid, validation_result, preview_df
@@ -314,8 +318,12 @@ with col1:
                                 st.session_state.health_score = health_score
                                 st.session_state.advice = advice
                                 st.rerun()
+                        except (ValueError, IOError) as e:
+                            logger.error(f"Analysis failed: {type(e).__name__}")
+                            st.error(f"❌ Error processing file: {type(e).__name__}")
                         except Exception as e:
-                            st.error(f"❌ Error: {str(e)}")
+                            logger.error(f"Unexpected error during analysis: {type(e).__name__}")
+                            st.error("❌ Unexpected error during analysis. Please try again.")
 
 with col2:
     st.subheader("📋 Income Summary")

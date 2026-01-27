@@ -56,9 +56,11 @@ def generate_bar_chart(needs, wants, savings, income, symbol):
     
     # Save to temporary file and close plot
     tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-    plt.savefig(tmp.name)
-    plt.close()
-    return tmp.name
+    try:
+        plt.savefig(tmp.name)
+        return tmp.name
+    finally:
+        plt.close()  # Always close figure to prevent memory leaks
 
 def generate_pie_chart(needs, wants, savings, income):
     """Generate pie chart showing expense breakdown percentages.
@@ -112,9 +114,11 @@ def generate_pie_chart(needs, wants, savings, income):
     
     # Save to temporary file and close plot
     tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-    plt.savefig(tmp.name)
-    plt.close()
-    return tmp.name
+    try:
+        plt.savefig(tmp.name)
+        return tmp.name
+    finally:
+        plt.close()  # Always close figure to prevent memory leaks
 
 def generate_category_chart(top_wants, symbol):
     """Generate bar chart for top 5 spending categories in Wants.
@@ -150,9 +154,11 @@ def generate_category_chart(top_wants, symbol):
     
     # Save to temporary file and close plot
     tmp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-    plt.savefig(tmp.name)
-    plt.close()
-    return tmp.name
+    try:
+        plt.savefig(tmp.name)
+        return tmp.name
+    finally:
+        plt.close()  # Always close figure to prevent memory leaks
 
 def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, advice):
     """Generate comprehensive financial health report PDF.

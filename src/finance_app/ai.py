@@ -256,6 +256,7 @@ Format your response with clear headers and bullet points for readability."""
         client = genai.Client(api_key=api_key)
         
         # Generate content using the modern API with enhanced parameters
+        # Add timeout to prevent indefinite hanging
         response = client.models.generate_content(
             model='gemini-2.0-flash-exp',
             contents=prompt,
@@ -264,7 +265,8 @@ Format your response with clear headers and bullet points for readability."""
                 "top_p": 0.95,        # Diverse but focused responses
                 "top_k": 40,          # Limit vocabulary for coherence
                 "max_output_tokens": 2000  # Allow detailed, comprehensive advice
-            }
+            },
+            timeout=15.0  # 15-second timeout to prevent indefinite hangs
         )
         
         # Extract text from response
@@ -279,8 +281,8 @@ Format your response with clear headers and bullet points for readability."""
         return score, advice
 
     except Exception as e:
-        # Log error and return score with fallback advice
-        logger.error(f"AI error: {str(e)}")
+        # Log error without exposing sensitive financial data
+        logger.error(f"AI request failed, using fallback advice: {type(e).__name__}")
         return score, fallback_advice
 
 
