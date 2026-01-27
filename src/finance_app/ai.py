@@ -212,8 +212,8 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
             
             # === PRIORITIZATION GUIDANCE ===
             "priority_areas": {
-                "primary_focus": self._determine_priority(needs_deviation, wants_deviation, savings_deviation),
-                "secondary_focus": self._determine_secondary_priority(needs_deviation, wants_deviation, savings_deviation),
+                "primary_focus": _determine_priority(needs_deviation, wants_deviation, savings_deviation),
+                "secondary_focus": _determine_secondary_priority(needs_deviation, wants_deviation, savings_deviation),
                 "improvement_potential": round(((100 - score) / 100) * income, 2)
             }
         }
