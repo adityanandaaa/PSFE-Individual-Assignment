@@ -21,6 +21,7 @@ st.set_page_config(
 # ============================================================================
 # IMPORTS (AFTER set_page_config)
 # ============================================================================
+import asyncio
 import pandas as pd
 from io import BytesIO
 import os
@@ -305,8 +306,8 @@ with col1:
                                 # Calculate health score
                                 health_score = calculate_health_score(income, needs, wants, savings)
                                 
-                                # Generate AI insights
-                                score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
+                                # Generate AI insights (async call wrapped with asyncio.run)
+                                score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants.to_dict()))
                                 
                                 st.session_state.analysis_done = True
                                 st.session_state.analysis_result = {

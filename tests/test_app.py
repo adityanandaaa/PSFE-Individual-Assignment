@@ -20,6 +20,7 @@ To run tests:
     pytest test_app.py -v
 """
 
+import asyncio
 import unittest
 import os
 import sys
@@ -179,7 +180,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
     def test_ai_fallback(self):
         """Test AI returns deterministic health score and advice."""
         # Now uses calculate_health_score() directly (not API-dependent)
-        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        score, advice = asyncio.run(get_ai_insights(1000, 500, 300, 200, {'food': 100}))
         # Score for perfect 50/30/20 should be 100
         self.assertEqual(score, 100)
         self.assertIsInstance(advice, str)
@@ -198,7 +199,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         mock_genai.configure = MagicMock()
         
         # Call AI function
-        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        score, advice = asyncio.run(get_ai_insights(1000, 500, 300, 200, {'food': 100}))
         
         # Verify results - score should be calculated from our logic (perfect 50/30/20 = 100)
         self.assertIsInstance(score, int)
@@ -224,7 +225,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         sys.modules['google.genai'] = mock_genai
         
         # Call AI function
-        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        score, advice = asyncio.run(get_ai_insights(1000, 500, 300, 200, {'food': 100}))
         
         # Verify results
         self.assertIsInstance(score, int)
@@ -234,7 +235,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
     def test_ai_without_api_key_uses_fallback(self):
         """Test that AI calculates score using our logic even without API key."""
         # Health score is now calculated using our own logic, not dependent on API
-        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        score, advice = asyncio.run(get_ai_insights(1000, 500, 300, 200, {'food': 100}))
         
         # Score should be calculated: perfect 50/30/20 = 100
         self.assertEqual(score, 100)
@@ -248,7 +249,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         mock_genai.GenerativeModel.side_effect = Exception("Network error")
         
         # Call AI function - should not raise exception
-        score, advice = get_ai_insights(1000, 500, 300, 200, {'food': 100})
+        score, advice = asyncio.run(get_ai_insights(1000, 500, 300, 200, {'food': 100}))
         
         # Score should be calculated from our logic (perfect 50/30/20 = 100)
         self.assertEqual(score, 100)
@@ -257,7 +258,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
     def test_ai_score_parsing_from_response(self):
         """Test that AI can parse scores from various response formats."""
         # This indirectly tests score parsing by checking fallback behavior
-        score, advice = get_ai_insights(5000, 2500, 1500, 1000, {'restaurant': 500, 'entertainment': 300})
+        score, advice = asyncio.run(get_ai_insights(5000, 2500, 1500, 1000, {'restaurant': 500, 'entertainment': 300}))
         
         # Score should be between 0 and 100
         self.assertIsInstance(score, int)
@@ -273,7 +274,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         savings = 1000  # 20%
         top_wants = {'restaurant': 400, 'entertainment': 300, 'shopping': 200, 'subscriptions': 150, 'hobbies': 100}
         
-        score, advice = get_ai_insights(income, needs, wants, savings, top_wants)
+        score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants))
         
         # Score should be deterministic from calculate_health_score (perfect 50/30/20 = 100)
         self.assertEqual(score, 100)
@@ -290,7 +291,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         savings = 0    # 0% (under-target by 20%)
         top_wants = {'food': 500, 'utilities': 300, 'other': 200}
         
-        score, advice = get_ai_insights(income, needs, wants, savings, top_wants)
+        score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants))
         
         # Score should be lower due to deviations and zero savings
         self.assertIsInstance(score, int)
@@ -307,7 +308,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         savings = 0    # 0% (under-target by 20%)
         top_wants = {'shopping': 1500, 'dining': 1200, 'entertainment': 800}
         
-        score, advice = get_ai_insights(income, needs, wants, savings, top_wants)
+        score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants))
         
         # Score should be lower but weighted deviations mean it won't be too extreme
         self.assertIsInstance(score, int)
@@ -324,7 +325,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         savings = 200  # 20%
         top_wants = {'food': 150, 'transport': 150}
         
-        score, advice = get_ai_insights(income, needs, wants, savings, top_wants)
+        score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants))
         
         # Should still work correctly
         self.assertEqual(score, 100)
@@ -341,7 +342,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         
         for income, needs, wants, savings, expected_score_approx in test_cases:
             top_wants = {'food': 300}
-            score, advice = get_ai_insights(income, needs, wants, savings, top_wants)
+            score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants))
             
             # Score should match our calculation
             self.assertIsInstance(score, int)
@@ -362,7 +363,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
         
         # Call with API key set
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'}):
-            score, advice = get_ai_insights(5000, 2500, 1500, 1000, {'food': 300})
+            score, advice = asyncio.run(get_ai_insights(5000, 2500, 1500, 1000, {'food': 300}))
         
         # Verify generate_content was called with proper config
         self.assertIsInstance(score, int)
@@ -732,7 +733,7 @@ class TestFinancialHealthChecker(unittest.TestCase):
             self.assertIn('entertainment', top_wants.index)
             
             # Step 4: Get AI insights
-            score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
+            score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants.to_dict()))
             self.assertIsInstance(score, int)
             self.assertIsInstance(advice, str)
             
@@ -917,7 +918,7 @@ class TestStreamlitIntegration(unittest.TestCase):
         symbol = get_currency_symbol(self.currencies, currency)
         
         needs, wants, savings, top_wants = analyze_data(df, income)
-        score, advice = get_ai_insights(income, needs, wants, savings, top_wants.to_dict())
+        score, advice = asyncio.run(get_ai_insights(income, needs, wants, savings, top_wants.to_dict()))
         
         # All results should be serializable (for session state)
         result = {

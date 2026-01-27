@@ -4,6 +4,7 @@ This module provides financial advice using the Gemini API.
 Health score is calculated using our own 50/30/20 logic formula.
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -84,11 +85,11 @@ def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
     return templates[idx]
 
 
-def get_ai_insights(income, needs, wants, savings, top_wants):
-    """Get AI advice with health score from our own logic.
+async def get_ai_insights(income, needs, wants, savings, top_wants):
+    """Get AI advice with health score from our own logic (async).
     
     Uses our mathematical 50/30/20 formula to calculate health score.
-    Calls Gemini API only for personalized financial advice.
+    Calls Gemini API asynchronously for personalized financial advice.
     If API is unavailable, returns sensible fallback recommendations.
 
     Args:
@@ -244,9 +245,9 @@ def get_ai_insights(income, needs, wants, savings, top_wants):
         # Initialize the client with API key (matches test_async_gemini.py pattern)
         client = genai.Client(api_key=api_key)
         
-        # Generate content using the modern API with enhanced parameters
-        # Add timeout to prevent indefinite hanging
-        response = client.models.generate_content(
+        # Generate content using the modern async API with enhanced parameters
+        # Use client.aio.models.generate_content for async calls
+        response = await client.aio.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
