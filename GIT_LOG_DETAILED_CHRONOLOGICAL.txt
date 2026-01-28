@@ -1,5 +1,83 @@
 
 ================================================================================
+Commit Hash: 2ed1aab4cc5002a41e6ce3f9de0ef2eb3f702e56
+Author:      tepe punya m3 <macbookairm3@Nathan-Air.local>
+Timestamp:   2026-01-28 11:43:39 +0000
+Commit Date: 2026-01-28 11:43:39 +0000
+
+Subject:     Add note about .venv exclusion from submission package
+
+Message:
+- Added notice that .venv folder (378 MB) is not included in submission
+- Provided GitHub repository link for complete project
+- Included instructions to recreate virtual environment
+- Helps reviewers understand submission package contents
+
+================================================================================
+
+================================================================================
+Commit Hash: b264256d5efa324b07924c0a76681a3b41be27d4
+Author:      tepe punya m3 <macbookairm3@Nathan-Air.local>
+Timestamp:   2026-01-28 11:39:41 +0000
+Commit Date: 2026-01-28 11:39:41 +0000
+
+Subject:     Final cleanup: remove outdated documentation files and update system files
+
+Message:
+- Removed API_KEY_SECURITY_AUDIT.md (archived documentation)
+- Removed LOGGING.md (consolidated into main docs)
+- Updated system files (.DS_Store)
+- Project finalized and ready for production
+
+================================================================================
+
+================================================================================
+Commit Hash: a4f927569fd0c866800e02dcc8b75b3d59ccb644
+Author:      tepe punya m3 <macbookairm3@Nathan-Air.local>
+Timestamp:   2026-01-28 11:33:37 +0000
+Commit Date: 2026-01-28 11:33:37 +0000
+
+Subject:     Add result_examples folder with sample PDF reports and update README
+
+Message:
+- Created result_examples/ folder to showcase sample outputs
+- Moved '[AI Advice] financial_report_20260128_112733.pdf' to result_examples/
+- Moved '[Fallback Advice] financial_report_20260128_112138.pdf' to result_examples/
+- Updated README.md Templates & Sample Results section to:
+  * Direct users to result_examples/ folder
+  * Explain AI-powered output example
+  * Explain fallback advice output example
+  * Show the difference between API and fallback modes
+  * Help users understand what to expect from the app
+- Reorganized sample results documentation for clarity
+
+================================================================================
+
+================================================================================
+Commit Hash: 360d8d05084312982010fd83728bc3babd80a4b9
+Author:      tepe punya m3 <macbookairm3@Nathan-Air.local>
+Timestamp:   2026-01-28 11:31:02 +0000
+Commit Date: 2026-01-28 11:31:02 +0000
+
+Subject:     Add comprehensive chronological git log with full commit details
+
+Message:
+- Created GIT_LOG_DETAILED_CHRONOLOGICAL.txt with chronological ordering
+- Each commit clearly separated with visual boundaries (===)
+- Includes for each commit:
+  * Commit Hash (full SHA)
+  * Author name and email
+  * Timestamp (ISO format)
+  * Commit Date
+  * Subject/message
+  * Full message body
+- Reverse chronological (newest to oldest)
+- 47 commits documented from initial commit to latest updates
+- Ready for project history reference and auditing
+
+================================================================================
+
+================================================================================
 Commit Hash: 70201751785a3bce5ea52864e4127534d8141a05
 Author:      tepe punya m3 <macbookairm3@Nathan-Air.local>
 Timestamp:   2026-01-28 11:29:32 +0000
