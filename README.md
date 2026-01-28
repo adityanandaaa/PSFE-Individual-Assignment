@@ -165,39 +165,59 @@ This template includes:
 
 ### Sample Analysis Results
 
+**Check `result_examples/` folder for real sample outputs:**
+
+1. **`[AI Advice] financial_report_20260128_112733.pdf`**
+   - Live Gemini AI-powered recommendations
+   - Real analysis with AI-generated insights
+   - Personalized financial advice and priority areas
+   - Shows what output looks like with working API
+
+2. **`[Fallback Advice] financial_report_20260128_112138.pdf`**
+   - Fallback recommendations (when API unavailable)
+   - Deterministic, rule-based financial guidance
+   - Same professional formatting and charts
+   - Shows app always delivers value, with or without AI
+
 When you upload your spending data, the app generates:
 
-**1. Budget Breakdown Analysis**
+**Budget Breakdown Analysis**
 - Automatic categorization of spending into Needs (50%), Wants (30%), Savings (20%)
 - Percentage of income allocated to each category
 - Identification of deviations from optimal 50/30/20 targets
 
-**2. Financial Health Score (0-100)**
+**Financial Health Score (0-100)**
 - **90-100**: Excellent - Perfect budget alignment
 - **70-89**: Good - Minor optimizations needed
 - **50-69**: Fair - Significant rebalancing recommended
 - **0-49**: Poor - Major changes required
 
-**3. AI-Generated Recommendations**
+**AI-Generated Recommendations** (when API available)
 - Current financial state assessment
 - 3 specific, quantified recommendations for improvement
 - 1 quick win (immediate action) and 1 long-term habit
 - Currency-aware advice using your selected currency
 
-**4. Priority Focus Areas**
+**Fallback Recommendations** (when API unavailable)
+- Intelligent, deterministic financial guidance
+- Adapts to your current financial health score
+- 10 different recommendation templates for variety
+- Ensures users always get valuable feedback
+
+**Priority Focus Areas**
 - **Primary Focus**: The single biggest area to optimize
 - **Secondary Focus**: The second most important area
 - **Improvement Potential**: Estimated income savings achievable
 
-**5. Visual Charts**
+**Visual Charts**
 - Pie chart showing budget breakdown
 - Bar chart comparing current vs. target percentages
 - Category spending breakdown visualization
 
-**6. PDF Report**
+**PDF Report**
 - Complete one-page summary with all analysis
 - Embedded charts and visualizations
-- AI advice formatted for easy reading
+- AI or fallback advice formatted for easy reading
 - Ready to save and share
 
 ## 📦 Installation

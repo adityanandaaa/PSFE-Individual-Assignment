@@ -9,8 +9,12 @@ import json
 import logging
 import re
 import os
+from dotenv import load_dotenv
 from finance_app.logic import calculate_health_score
 from finance_app.logging_config import get_logger
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Get module logger
 logger = get_logger(__name__)
@@ -245,13 +249,21 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
             logger.warning("Environment variable GEMINI_API_KEY not set; using fallback advice.")
             return score, fallback_advice
         
+        logger.debug(f"API key found: {api_key[:10]}...")
+        
         # Initialize the client with API key (matches test_async_gemini.py pattern)
-        client = genai.Client(api_key=api_key)
+        try:
+            client = genai.Client(api_key=api_key)
+            logger.debug("Client initialized successfully")
+        except Exception as client_err:
+            logger.error(f"Failed to initialize client: {type(client_err).__name__}: {str(client_err)}")
+            return score, fallback_advice
         
         # Generate content using the modern async API with timeout
         # Note: async API uses simpler signature - config params handled differently
         import asyncio
         try:
+            logger.debug(f"Calling Gemini API with prompt length: {len(prompt)}")
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(
                     model='gemini-2.5-flash',
@@ -259,8 +271,12 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
                 ),
                 timeout=15.0  # 15 second timeout to prevent indefinite hangs
             )
+            logger.debug("API call succeeded")
         except asyncio.TimeoutError:
             logger.warning("AI request timed out (15s); using fallback advice")
+            return score, fallback_advice
+        except Exception as api_err:
+            logger.error(f"API call failed: {type(api_err).__name__}: {str(api_err)}")
             return score, fallback_advice
         
         # Check for truncation due to max_output_tokens
@@ -272,6 +288,7 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
         # Extract text from response
         if response and response.text:
             advice = response.text
+            logger.debug(f"AI advice generated: {len(advice)} characters")
         else:
             logger.warning("Empty response from AI; using fallback advice.")
             advice = fallback_advice
@@ -282,7 +299,7 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
 
     except Exception as e:
         # Log error without exposing sensitive financial data
-        logger.error(f"AI request failed, using fallback advice: {type(e).__name__}")
+        logger.error(f"Outer AI request exception: {type(e).__name__}: {str(e)}")
         return score, fallback_advice
 
 

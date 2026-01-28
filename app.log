@@ -8,3 +8,14 @@
 2026-01-27 02:46:33 - INFO - AFC is enabled with max remote calls: 10.
 2026-01-27 02:53:58 - INFO - AFC is enabled with max remote calls: 10.
 2026-01-27 02:57:48 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:21:11 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:21:26 - WARNING - AI request timed out (15s); using fallback advice
+2026-01-28 11:21:59 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:22:00 - ERROR - AI request failed, using fallback advice: ClientError
+2026-01-28 11:22:12 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:22:12 - ERROR - AI request failed, using fallback advice: ClientError
+2026-01-28 11:24:00 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:24:00 - ERROR - AI request failed, using fallback advice: ClientError
+2026-01-28 11:25:21 - INFO - AFC is enabled with max remote calls: 10.
+2026-01-28 11:25:21 - ERROR - API call failed: ClientError: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+2026-01-28 11:27:11 - INFO - AFC is enabled with max remote calls: 10.
