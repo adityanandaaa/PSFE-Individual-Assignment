@@ -6,7 +6,7 @@ A modern web application for analyzing personal finances using the 50/30/20 budg
 
 ```bash
 # 1. Navigate to project
-cd /Users/macbookairm3/new_python_project
+cd /Users/macbookairm3/Finance_Health_Check
 
 # 2. Activate virtual environment
 source .venv/bin/activate
