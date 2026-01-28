@@ -248,12 +248,20 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
         # Initialize the client with API key (matches test_async_gemini.py pattern)
         client = genai.Client(api_key=api_key)
         
-        # Generate content using the modern async API
+        # Generate content using the modern async API with timeout
         # Note: async API uses simpler signature - config params handled differently
-        response = await client.aio.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+        import asyncio
+        try:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                ),
+                timeout=15.0  # 15 second timeout to prevent indefinite hangs
+            )
+        except asyncio.TimeoutError:
+            logger.warning("AI request timed out (15s); using fallback advice")
+            return score, fallback_advice
         
         # Check for truncation due to max_output_tokens
         if hasattr(response, 'candidates') and response.candidates:

@@ -45,6 +45,26 @@ def validate_file(file_path):
     Returns:
         tuple: (is_valid: bool, result: pd.DataFrame or list of (row_num, error_msg) tuples)
     """
+    # Check file size limit (50 MB) to prevent memory issues with very large uploads
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB in bytes
+    try:
+        # Get file size - handle both file paths and BytesIO objects
+        if hasattr(file_path, 'getbuffer'):
+            # BytesIO object from Streamlit file uploader
+            file_size = len(file_path.getbuffer())
+        else:
+            # File path string
+            import os
+            file_size = os.path.getsize(file_path)
+        
+        if file_size > MAX_FILE_SIZE:
+            size_mb = file_size / 1024 / 1024
+            logger.warning(f"Uploaded file too large: {size_mb:.1f} MB (limit: 50 MB)")
+            return False, [(0, f"File too large ({size_mb:.1f} MB > 50 MB limit)")]
+    except Exception:
+        # If we can't determine size, proceed with validation (will fail later if too large)
+        pass
+    
     try:
         # Load Excel file using openpyxl engine for better compatibility
         # Use context manager to ensure file is properly closed after reading

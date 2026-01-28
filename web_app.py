@@ -443,8 +443,12 @@ if st.session_state.analysis_done and "analysis_result" in st.session_state:
                     use_container_width=True
                 )
                 st.success("✅ PDF generated successfully!")
+            except (IOError, OSError, ValueError) as e:
+                logger.error(f"PDF generation failed: {type(e).__name__}")
+                st.error(f"❌ Error generating PDF: {type(e).__name__}")
             except Exception as e:
-                st.error(f"❌ Error generating PDF: {str(e)}")
+                logger.error(f"Unexpected error in PDF generation: {type(e).__name__}")
+                st.error("❌ Unexpected error generating PDF. Please try again.")
     
     # Reset button
     if st.button("🔄 Start New Analysis", use_container_width=True):

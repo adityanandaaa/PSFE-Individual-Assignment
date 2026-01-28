@@ -18,3 +18,4 @@ Collecting usage statistics. To deactivate, set browser.gatherUsageStats to fals
 2026-01-27 02:56:31.608 Received event for non-watched file: /Users/macbookairm3/Finance_Health_Check/web_app.py
 2026-01-27 02:56:45.651 Received event for non-watched file: /Users/macbookairm3/Finance_Health_Check/web_app.py
 2026-01-27 02:59:13.334 Received event for non-watched file: /Users/macbookairm3/Finance_Health_Check/web_app.py
+  Stopping...
