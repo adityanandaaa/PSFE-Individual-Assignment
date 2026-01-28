@@ -10,4 +10,6 @@ app.log
 test_*.xlsx
 bad_*.xlsx
 many_*.xlsx
-*.pdf
+# Allow PDF files to be tracked (user-generated PDFs will be in Downloads)
+# Only ignore temporary/test PDFs
+/tmp_*.pdf
