@@ -146,6 +146,60 @@ Shows:
 └── .env                    # API configuration
 ```
 
+## 📊 Templates & Sample Results
+
+### Excel Template
+A complete Excel template is provided: **`data/Finance Health Check 50_30_20 Templates.xlsx`**
+
+This template includes:
+- Pre-formatted columns (Date, Name, Type, Amount, Category)
+- Example data showing proper formatting
+- Instructions sheet with column requirements
+- Multiple example transactions covering Needs, Wants, and Savings categories
+
+**How to Use**:
+1. Download the template from `data/Finance Health Check 50_30_20 Templates.xlsx`
+2. Add your transactions following the example format
+3. Save as Excel file (.xlsx)
+4. Upload to the web app
+
+### Sample Analysis Results
+
+When you upload your spending data, the app generates:
+
+**1. Budget Breakdown Analysis**
+- Automatic categorization of spending into Needs (50%), Wants (30%), Savings (20%)
+- Percentage of income allocated to each category
+- Identification of deviations from optimal 50/30/20 targets
+
+**2. Financial Health Score (0-100)**
+- **90-100**: Excellent - Perfect budget alignment
+- **70-89**: Good - Minor optimizations needed
+- **50-69**: Fair - Significant rebalancing recommended
+- **0-49**: Poor - Major changes required
+
+**3. AI-Generated Recommendations**
+- Current financial state assessment
+- 3 specific, quantified recommendations for improvement
+- 1 quick win (immediate action) and 1 long-term habit
+- Currency-aware advice using your selected currency
+
+**4. Priority Focus Areas**
+- **Primary Focus**: The single biggest area to optimize
+- **Secondary Focus**: The second most important area
+- **Improvement Potential**: Estimated income savings achievable
+
+**5. Visual Charts**
+- Pie chart showing budget breakdown
+- Bar chart comparing current vs. target percentages
+- Category spending breakdown visualization
+
+**6. PDF Report**
+- Complete one-page summary with all analysis
+- Embedded charts and visualizations
+- AI advice formatted for easy reading
+- Ready to save and share
+
 ## 📦 Installation
 
 Already done! Virtual environment and dependencies are set up. Just run:
