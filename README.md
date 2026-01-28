@@ -2,6 +2,8 @@
 
 A modern web application for analyzing personal finances using the 50/30/20 budgeting framework. Built with Streamlit - no .exe installation needed, just run a simple command.
 
+> **📦 Note on Submission**: The `.venv` folder (378 MB virtual environment) is not included in the submission package due to size constraints. The complete project with virtual environment is available on the [GitHub repository](https://github.com/adityanandaaa/PSFE-Individual-Assignment). You can recreate the environment using `python -m venv .venv` and `pip install -r requirements.txt`.
+
 ## 🚀 Quick Start (3 Steps)
 
 ```bash
