@@ -13,7 +13,7 @@ Tests cover:
 - PDF report generation
 
 DEPRECATED TESTS (for legacy .exe desktop app):
-- Tkinter GUI tests (see LEGACY_FILES.md)
+- Tkinter GUI tests (see legacy/ folder)
 - PyInstaller packaging tests
 
 To run tests:
@@ -970,7 +970,7 @@ class TestStreamlitIntegration(unittest.TestCase):
 # ============================================================================
 # The following tests were used for the Tkinter desktop application.
 # They are kept for reference but are no longer executed.
-# See LEGACY_FILES.md for information about the legacy app.
+# See legacy/ folder for information about the legacy app.
 
 """
 # === LEGACY TKINTER GUI TESTS ===

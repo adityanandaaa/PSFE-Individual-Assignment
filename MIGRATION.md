@@ -85,7 +85,7 @@ The project has been reorganized to follow modern Python packaging standards:
 - `legacy/modules/ui.py` - Legacy UI components
 - `legacy/setup.py` - Legacy PyInstaller config
 
-See `LEGACY_FILES.md` to understand old code.
+See `MIGRATION.md` for details on old code.
 
 ## 🚀 Result
 

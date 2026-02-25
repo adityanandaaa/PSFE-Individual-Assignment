@@ -194,30 +194,26 @@ Shows:
 ## 📁 Project Structure
 
 ```
-├── web_app.py              # Main web application
+├── web_app.py              # Main web application (Streamlit)
+├── run_web_app.sh          # Shortcut script to launch the app
 ├── src/
-│   └── finance_app/        # Core package
-│       ├── logic.py        # Financial calculations & Validation integration
-│       ├── ai.py           # AI insights (with circuit breaker)
-│       ├── models.py       # Pydantic data models (NEW: Input Depth Defense)
-│       ├── pdf_generator.py # PDF reports (sanitized output)
-│       ├── config.py       # Configuration & Environment Protection
-│       ├── logging_config.py # Logging setup with PII masking
-│       ├── rate_limiting.py # Rate limiting & AI Circuit Breaker (UPDATED)
-│       └── sanitizer.py    # XSS/Injection prevention
-├── data/
-│   ├── currencies.json     # 84 currencies
-│   └── Finance Health Check 50_30_20 Templates.xlsx  # Excel template
-├── tests/
-│   ├── test_app.py         # 70 core tests
-│   ├── test_rate_limiting.py # 9 rate limiting tests
-│   ├── test_performance.py # 2 performance tests
-│   ├── test_sanitization.py # 39 sanitization tests
-│   └── test_pydantic_validation.py # Pydantic schema tests (NEW)
-├── legacy/                 # Old desktop app code
-├── requirements.txt        # Dependencies
-├── requirements-frozen.txt # Exact reproducible environment (NEW)
-└── .env                    # API configuration
+│   └── finance_app/        # Core package (Logic, AI, Security)
+│       ├── models.py       # Pydantic data models (Input Depth Defense)
+│       ├── ai.py           # AI insights with Circuit Breaker
+│       ├── logic.py        # 50/30/20 Analysis Logic
+│       ├── config.py       # Environment Protection & Config
+│       └── ...             # Other core modules (Sanitizer, Logging, etc.)
+├── tests/                  # 121 unit and integration tests
+├── scripts/                # Utility scripts (e.g., security_audit.sh)
+├── submissions/            # Project submission artifacts (PDFs)
+├── data/                   # JSON currencies and Excel templates
+├── result_examples/        # Sample PDF reports (AI vs Fallback)
+├── legacy/                 # Original Tkinter desktop code (Ref only)
+├── MIGRATION.md            # Details on framework transition
+├── SECURITY.md             # Security policy and reporting
+├── requirements.txt        # Top-level dependencies
+├── requirements-frozen.txt # Reproducible dependency snapshot
+└── .env                    # Environment variables (API Keys)
 ```
 
 ## 📊 Templates & Sample Results
