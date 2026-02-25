@@ -14,6 +14,7 @@ Usage:
 import logging
 import os
 from pathlib import Path
+from finance_app.log_masker import SensitiveDataFilter
 
 
 class LogLevelConfig:
@@ -113,7 +114,11 @@ def setup_logging(log_level=logging.INFO, log_file='app.log',
     # Add handlers to logger
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-    
+
+    # Add sensitive data masking filter
+    mask_filter = SensitiveDataFilter()
+    logger.addFilter(mask_filter)
+
     return logger
 
 

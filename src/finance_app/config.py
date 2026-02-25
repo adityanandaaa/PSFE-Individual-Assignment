@@ -1,5 +1,29 @@
 import os
 from datetime import datetime
+import logging
+from finance_app.models import EnvConfig
+from pydantic import ValidationError
+
+# Get logger
+logger = logging.getLogger(__name__)
+
+def validate_environment():
+    """Validate project environment variables against schema.
+    
+    This provides 'Environment Protection' by ensuring required keys 
+    like GEMINI_API_KEY meet minimum length and format requirements.
+    """
+    try:
+        # Load and validate environment configuration
+        config = EnvConfig(
+            gemini_api_key=os.getenv('GEMINI_API_KEY', '')
+        )
+        return config
+    except ValidationError as e:
+        logger.critical(f"Environment configuration failed validation: {str(e)}")
+        # If in a production context, you might want to raise an error
+        # return None for now so the app can handle it gracefully
+        return None
 
 # === FILE PATHS ===
 # Path to currencies data file (supports multiple currencies)

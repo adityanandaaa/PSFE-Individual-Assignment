@@ -28,17 +28,64 @@ import os
 import re
 import tempfile
 import logging
+import time
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Import core business logic modules
 from finance_app.logic import load_currencies, is_valid_income, get_currency_symbol, validate_file, analyze_data, calculate_health_score
 from finance_app.ai import get_ai_insights
 from finance_app.pdf_generator import generate_pdf
-from finance_app.config import get_pdf_filename, get_template_filename, DOWNLOADS_PATH
+from finance_app.config import get_pdf_filename, get_template_filename, DOWNLOADS_PATH, validate_environment
 from finance_app.logging_config import setup_logging, get_logger
 
 # Load environment variables (e.g., GEMINI_API_KEY) from .env file
 load_dotenv()
+
+# ============================================================================
+# ENVIRONMENT VALIDATION
+# ============================================================================
+# Perform environment protection check on startup
+env_config = validate_environment()
+if not env_config:
+    st.error("Critical configuration error. Please check your environment variables and .env file.")
+    st.info("Ensure GEMINI_API_KEY is correctly set.")
+    # In production, you might stop here, but for development we'll continue 
+    # as other features (offline health check) still work.
+
+# ============================================================================
+# SESSION TIMEOUT CONFIGURATION
+# ============================================================================
+SESSION_TIMEOUT_SECONDS = 30 * 60  # 30 minutes of inactivity before clearing session
+
+def check_session_timeout():
+    """Check for session inactivity and clear state if beyond limit.
+    
+    This is a security hardening feature to prevent data persistence 
+    in shared browser environments.
+    """
+    current_time = time.time()
+    
+    # Initialize session start and last activity
+    if 'last_activity' not in st.session_state:
+        st.session_state['last_activity'] = current_time
+        return
+
+    # Check for timeout
+    elapsed_time = current_time - st.session_state['last_activity']
+    if elapsed_time > SESSION_TIMEOUT_SECONDS:
+        # Clear all session data for security
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.session_state['last_activity'] = current_time
+        st.warning("Session timed out due to inactivity. Data has been cleared for your security.")
+        st.rerun()
+    else:
+        # Update activity timestamp
+        st.session_state['last_activity'] = current_time
+
+# Run session timeout check immediately
+check_session_timeout()
 
 # ============================================================================
 # LOGGING CONFIGURATION

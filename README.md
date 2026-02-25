@@ -350,6 +350,30 @@ python -m pytest tests/test_sanitization.py  # 39 sanitization tests (NEW)
   * Amount string sanitization
   * Real-world category name handling
 
+## 🛡️ Security Features
+
+This application implements multi-layered security protections. Detailed security configurations and vulnerability reporting can be found in [SECURITY.md](SECURITY.md).
+
+- **Data Sanitization**: XSS/Injection prevention for all inputs (`bleach`).
+- **Input Depth Defense**: Strict schema validation using Pydantic models.
+- **Log Masking**: Automatic PII redaction in application logs.
+- **Session Security**: Automatic 30-minute inactivity timeout.
+- **AI Throttling**: Rate limiting and exponential backoff for Gemini API.
+- **Continuous Auditing**: Integrated `bandit` (SAST) and `pip-audit`.
+
+## 🔍 Running Security Audits
+A comprehensive security audit script is provided to verify the codebase's integrity:
+
+```bash
+chmod +x scripts/security_audit.sh
+./scripts/security_audit.sh
+```
+
+This runs:
+1. **Bandit (SAST)**: Static code analysis for security vulnerabilities.
+2. **Pip-audit**: Dependency vulnerability scanning.
+3. **Security Logic Tests**: Runs all unit tests specifically designed for sanitization, rate-limiting, and PII protection.
+
 ## 🔧 Requirements
 
 - **Python 3.13+**

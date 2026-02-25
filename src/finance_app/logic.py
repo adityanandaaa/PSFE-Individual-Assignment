@@ -5,6 +5,8 @@ from datetime import datetime
 from functools import lru_cache
 from finance_app.config import CURRENCIES_FILE
 from finance_app.logging_config import get_logger
+from finance_app.models import FinancialRecord
+from pydantic import ValidationError
 
 # Get module logger
 logger = get_logger(__name__)
@@ -61,9 +63,9 @@ def validate_file(file_path):
             size_mb = file_size / 1024 / 1024
             logger.warning(f"Uploaded file too large: {size_mb:.1f} MB (limit: 50 MB)")
             return False, [(0, f"File too large ({size_mb:.1f} MB > 50 MB limit)")]
-    except Exception:
-        # If we can't determine size, proceed with validation (will fail later if too large)
-        pass
+    except Exception as e:
+        # Log that we couldn't check size, but don't stop as validation will check content
+        logger.debug(f"Could not determine file size before validation: {str(e)}")
     
     try:
         # Load Excel file using openpyxl engine for better compatibility
@@ -99,64 +101,46 @@ def validate_file(file_path):
         # Check if all required columns exist
         if not all(col in df.columns for col in required_cols):
             errors.append((0, "Missing required columns."))
+            return False, errors
         
-        # Iterate through each row to validate data
+        # Iterate through each row to validate data using Pydantic
         for idx, row in df.iterrows():
-            # === DATE VALIDATION ===
-            if pd.isna(row['Date']):
-                errors.append((idx+1, "Date is empty."))
-            else:
-                # Accept Excel datetime serials or datetime/Timestamp objects as-is
-                date_val = row['Date']
-                try:
-                    if isinstance(date_val, (datetime, pd.Timestamp)):
-                        parsed_date = pd.to_datetime(date_val, errors='coerce')
-                    elif isinstance(date_val, (int, float)):
-                        # Excel serial dates are numeric; let pandas convert
-                        parsed_date = pd.to_datetime(date_val, errors='coerce', unit='D', origin='1899-12-30')
-                    else:
-                        # For strings, enforce dd/mm/YYYY (with slash or dash)
-                        parsed_date = pd.to_datetime(date_val, errors='coerce', format='%d/%m/%Y')
-                        if pd.isna(parsed_date):
-                            parsed_date = pd.to_datetime(date_val, errors='coerce', format='%d-%m-%Y')
-                    if pd.isna(parsed_date):
-                        errors.append((idx+1, "Invalid date format."))
-                except Exception:
-                    errors.append((idx+1, "Invalid date format."))
-            
-            # === NAME VALIDATION ===
-            # Check: not empty, is string, max 150 chars, contains alphanumeric + spaces
-            if pd.isna(row['Name']) or not isinstance(row['Name'], str) or len(str(row['Name'])) > 150 or str(row['Name']).replace(' ', '').isalnum() == False:
-                errors.append((idx+1, "Invalid name."))
-            
-            # === TYPE VALIDATION ===
-            # Type must be one of the three budget categories
-            if row['Type'] not in ['Needs', 'Wants', 'Savings']:
-                errors.append((idx+1, "Invalid type."))
-            
-            # === AMOUNT VALIDATION ===
             try:
-                # Convert amount to float for numeric validation (allow commas)
-                amt_str = str(row['Amount']).replace(',', '')
-                amt = float(amt_str)
-                # Amount must be positive
-                if amt <= 0:
-                    errors.append((idx+1, "Invalid amount."))
-                else:
-                    # Check decimal places - maximum 3 decimal places allowed (e.g., 10.999)
-                    s = str(row['Amount'])
-                    if '.' in s:
-                        dec = s.split('.')[-1]
-                        if len(dec) > 3:
-                            errors.append((idx+1, "Invalid amount."))
-            except Exception:
-                # Amount conversion failed
-                errors.append((idx+1, "Invalid amount."))
-            
-            # === CATEGORY VALIDATION ===
-            # Check: not empty, is string, max 150 chars
-            if pd.isna(row['Category']) or not isinstance(row['Category'], str) or len(str(row['Category'])) > 150:
-                errors.append((idx+1, "Invalid category."))
+                # Convert row to dictionary for Pydantic validation
+                row_dict = row.to_dict()
+                
+                # Pre-processing for Pydantic (Amount string cleanup)
+                if isinstance(row_dict.get('Amount'), str):
+                    row_dict['Amount'] = row_dict['Amount'].replace(',', '')
+
+                # Validate using Pydantic model
+                FinancialRecord.model_validate(row_dict)
+                
+            except ValidationError as e:
+                # Extract the first error message for the row
+                for error in e.errors():
+                    # Format field-specific errors into human-readable messages
+                    field = error['loc'][0]
+                    # Map Pydantic errors back to the app's error message style
+                    if field == 'Name':
+                        if 'max_length' in error['type']:
+                            errors.append((idx+1, "Name too long (max 150 chars)."))
+                        else:
+                            errors.append((idx+1, "Invalid name."))
+                    elif field == 'Type':
+                        errors.append((idx+1, "Invalid type."))
+                    elif field == 'Amount':
+                        errors.append((idx+1, "Invalid amount."))
+                    elif field == 'Date':
+                        errors.append((idx+1, "Invalid date format."))
+                    elif field == 'Category':
+                         errors.append((idx+1, "Invalid category."))
+                    else:
+                        errors.append((idx+1, f"Invalid {field.lower()}"))
+                    break # Only report the first error per row for clarity
+            except Exception as e:
+                logger.error(f"Unexpected error validating row {idx+1}: {str(e)}")
+                errors.append((idx+1, "Unexpected error in data format."))
         
         # Return results based on whether any errors were found
         if errors:
