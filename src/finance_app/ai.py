@@ -107,6 +107,10 @@ async def _call_gemini_api(client, model, prompt):
     """
     # Check rate limiting status
     status = get_rate_limiter_status()
+    if status.get('quota_exhausted'):
+        logger.warning("API quota exhausted detected; skipping call.")
+        raise Exception("429 RESOURCE_EXHAUSTED: Daily quota exceeded")
+        
     if status['rate_limited']:
         logger.warning(
             f"Rate limit active: {status['current_calls']}/{status['max_calls']} calls. "
@@ -160,6 +164,12 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
         # === BUILD ENHANCED PROMPT PAYLOAD ===
         # Create a comprehensive, structured payload with detailed financial metrics
         # This enables the AI to provide more nuanced, context-aware insights
+        
+        # Ensure native Python types for JSON serialization (Pandas/NumPy types cause issues)
+        income = float(income)
+        needs = float(needs)
+        wants = float(wants)
+        savings = float(savings)
         
         # Calculate additional metrics for richer analysis
         needs_ratio = needs / income if income else 0
@@ -242,9 +252,9 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
             # === TOP SPENDING CATEGORIES (for pattern analysis) ===
             "top_wants_categories": {
                 category: {
-                    "amount": amount,
-                    "percentage_of_wants": round((amount / wants * 100) if wants else 0, 1),
-                    "percentage_of_income": round((amount / income * 100) if income else 0, 1)
+                    "amount": float(amount),
+                    "percentage_of_wants": round((float(amount) / wants * 100) if wants else 0, 1),
+                    "percentage_of_income": round((float(amount) / income * 100) if income else 0, 1)
                 }
                 # Limit to top 3 to reduce prompt size for free tier
                 for category, amount in list(top_wants.items())[:3]

@@ -120,23 +120,23 @@ def validate_file(file_path):
                 # Extract the first error message for the row
                 for error in e.errors():
                     # Format field-specific errors into human-readable messages
-                    field = error['loc'][0]
+                    field = str(error['loc'][0]).lower()
                     # Map Pydantic errors back to the app's error message style
-                    if field == 'Name':
+                    if field == 'name':
                         if 'max_length' in error['type']:
                             errors.append((idx+1, "Name too long (max 150 chars)."))
                         else:
                             errors.append((idx+1, "Invalid name."))
-                    elif field == 'Type':
+                    elif field == 'type':
                         errors.append((idx+1, "Invalid type."))
-                    elif field == 'Amount':
+                    elif field == 'amount':
                         errors.append((idx+1, "Invalid amount."))
-                    elif field == 'Date':
+                    elif field == 'date':
                         errors.append((idx+1, "Invalid date format."))
-                    elif field == 'Category':
-                         errors.append((idx+1, "Invalid category."))
+                    elif field == 'category':
+                        errors.append((idx+1, "Invalid category."))
                     else:
-                        errors.append((idx+1, f"Invalid {field.lower()}"))
+                        errors.append((idx+1, f"Invalid {field}"))
                     break # Only report the first error per row for clarity
             except Exception as e:
                 logger.error(f"Unexpected error validating row {idx+1}: {str(e)}")
@@ -163,6 +163,12 @@ def analyze_data(df, income):
     Returns:
         tuple: (needs, wants, savings, top_wants_series)
     """
+    # Safety check for non-DataFrame input (contract enforcement)
+    if not isinstance(df, pd.DataFrame):
+        logger.error(f"analyze_data received non-DataFrame input: {type(df)}")
+        # Return zeros and empty series as safe fallback to prevent app crash
+        return 0, 0, 0, pd.Series(dtype=float)
+
     # Normalize category names to lowercase for consistent grouping
     df['Category'] = df['Category'].str.lower()
     

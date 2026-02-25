@@ -10,6 +10,8 @@ This module provides:
 import asyncio
 import logging
 import time
+import os
+import sys
 from functools import wraps
 from typing import Callable, Any, TypeVar, Optional
 
@@ -38,6 +40,15 @@ class RateLimiter:
         self.max_calls = max_calls
         self.time_window = time_window
         self.calls = []
+        self._quota_exhausted = False  # Track 429 errors persistently
+
+    def mark_exhausted(self, is_exhausted: bool = True):
+        """Mark the quota as exhausted (e.g. on 429)."""
+        self._quota_exhausted = is_exhausted
+
+    def is_exhausted(self) -> bool:
+        """Check if quota is currently marked as exhausted."""
+        return self._quota_exhausted
 
     def is_allowed(self) -> bool:
         """Check if a call is allowed within rate limit."""
@@ -110,9 +121,26 @@ def exponential_backoff(max_retries: int = MAX_RETRIES,
             
             for attempt in range(max_retries + 1):
                 try:
+                    # Also check if quota is already marked as exhausted before trying
+                    if _api_rate_limiter.is_exhausted():
+                        raise Exception("429 RESOURCE_EXHAUSTED: Daily quota exceeded")
+
                     return func(*args, **kwargs)
                 except Exception as e:
                     last_exception = e
+                    
+                    # More robust error detection for rate limits
+                    error_repr = repr(e).upper()
+                    error_msg = str(e).upper()
+                    is_rate_limit = any(term in error_msg or term in error_repr for term in 
+                                       ["429", "RESOURCE_EXHAUSTED", "QUOTA", "THROTTLED", "RATE_LIMIT"])
+                    
+                    if is_rate_limit:
+                        # Mark globally
+                        _api_rate_limiter.mark_exhausted(True)
+                        logger.error(f"Rate limit hit in sync call. Stopping. Error: {str(e)}")
+                        break
+
                     if attempt < max_retries:
                         logger.warning(
                             f"{func.__name__} attempt {attempt + 1}/{max_retries + 1} failed. "
@@ -146,9 +174,31 @@ def exponential_backoff_async(max_retries: int = MAX_RETRIES,
             
             for attempt in range(max_retries + 1):
                 try:
+                    # Also check if quota is already marked as exhausted before trying
+                    if _api_rate_limiter.is_exhausted():
+                        raise Exception("429 RESOURCE_EXHAUSTED: Daily quota exceeded")
+
                     return await func(*args, **kwargs)
                 except Exception as e:
                     last_exception = e
+                    
+                    # More robust error detection for rate limits
+                    error_repr = repr(e).upper()
+                    error_msg = str(e).upper()
+                    is_rate_limit = any(term in error_msg or term in error_repr for term in 
+                                       ["429", "RESOURCE_EXHAUSTED", "QUOTA", "THROTTLED", "RATE_LIMIT"])
+                    
+                    # Check if we are in a testing environment
+                    is_testing = any(env in os.environ for env in ["PYTEST_CURRENT_TEST", "UNITTEST_RUNNING", "CI"]) or \
+                                 "unittest" in sys.modules or "pytest" in sys.modules or \
+                                 any("test" in arg.lower() for arg in sys.argv)
+                    
+                    if is_rate_limit:
+                        # Mark globally so other tests don't try
+                        _api_rate_limiter.mark_exhausted(True)
+                        logger.error(f"Rate limit hit. Per-day quota might be exceeded. Stopping further attempts. Error: {str(e)}")
+                        break
+
                     if attempt < max_retries:
                         logger.warning(
                             f"{func.__name__} attempt {attempt + 1}/{max_retries + 1} failed. "
@@ -202,5 +252,6 @@ def get_rate_limiter_status() -> dict:
         'max_calls': _api_rate_limiter.max_calls,
         'time_window': _api_rate_limiter.time_window,
         'calls_remaining': max(0, _api_rate_limiter.max_calls - recent_calls),
-        'rate_limited': recent_calls >= _api_rate_limiter.max_calls
+        'rate_limited': recent_calls >= _api_rate_limiter.max_calls,
+        'quota_exhausted': _api_rate_limiter.is_exhausted()
     }

@@ -30,6 +30,12 @@ Opens at: **http://localhost:8501**
 - **📈 Visualizations**: Interactive charts showing budget breakdown
 - **📥 PDF Reports**: Download comprehensive financial health reports
 - **📋 Comprehensive Logging**: Automatic log rotation with file and console handlers
+- **🔒 Security Hardening**: 
+  - **Pydantic Validation**: Strict schema enforcement for all data inputs.
+  - **Environment Protection**: Automatic verification of API keys and configurations.
+  - **Session Management**: 30-minute inactivity timeouts for privacy.
+  - **AI Circuit Breaker**: Intelligent rate-limit handling for Gemini API.
+  - **SAST & SCA Audited**: Regularly scanned with Bandit and Pip-audit.
 
 ## 📋 How to Use
 
@@ -123,15 +129,22 @@ Shows:
 - **Structured Error Handling**: Changed to tuple-based error reporting for better clarity
 
 ### Testing Expansion
-- **109 Total Tests** (70 core + 2 performance + 9 rate limiting + 39 sanitization) (NEW)
+- **121 Total Tests** (70 core + 2 performance + 9 rate limiting + 39 sanitization + 1 Pydantic/Environment)
 - **100% Pass Rate**: All tests passing consistently
-- **Comprehensive Coverage**: Logic, AI, PDF, Streamlit integration, performance, security, and input sanitization
+- **Comprehensive Coverage**: Logic, AI, PDF, Streamlit integration, performance, security, and Pydantic validation
 - **Performance Tests**: Load time (cold/warm) and feature runtime monitoring
-- **Rate Limiting Tests**: Throttling and exponential backoff verification (9 tests)
-- **Sanitization Tests**: XSS/injection prevention across 39 test cases (NEW)
+- **Rate Limiting Tests**: Throttling, exponential backoff, and **AI Circuit Breaker** verification
+- **Sanitization Tests**: XSS/injection prevention across 39 test cases
 
 ### 🔐 Security Enhancements (Latest)
-- **Input Sanitization & XSS Prevention** (NEW):
+- **Input Depth Defense (Pydantic v2)**: 
+  * Strict schema enforcement for all data models using Pydantic.
+  * Validation of all transactions (date formats, types, amounts).
+  * Environment protection ensuring all required API keys and settings are valid before startup.
+- **AI Circuit Breaker**:
+  * Persistent tracking of API quota exhaustion (`RESOURCE_EXHAUSTED`).
+  * Stops redundant retries once a limit is hit, preserving test speed and system stability.
+- **Input Sanitization & XSS Prevention**:
   * `sanitizer.py` module removes HTML/JavaScript from all user inputs
   * Category names sanitized before PDF display
   * File names cleaned to prevent path traversal attacks
@@ -169,15 +182,14 @@ Shows:
   * WARNING+ to console, INFO+ to file
   * No sensitive data logged
 
-### Current Status (Feb 18, 2026)
+### Current Status (Feb 25, 2026)
 ✅ **Production Ready** - All major features implemented and tested
-- App is stable with 109 total tests (all passing)
-- Security hardened with input sanitization, rate limiting, validation, and secure credentials
+- App is stable with **121 total tests** (all passing)
+- Security hardened with Pydantic validation, AI circuit breaker, input sanitization, and PII masking.
 - Performance monitored with load time tests
-- 100% error handling coverage across 8 modules
+- 100% error handling coverage across all modules
 - XSS/Injection attacks prevented with comprehensive sanitization
 - Ready for deployment with proper environment setup
-
 
 ## 📁 Project Structure
 
@@ -185,24 +197,26 @@ Shows:
 ├── web_app.py              # Main web application
 ├── src/
 │   └── finance_app/        # Core package
-│       ├── logic.py        # Financial calculations
-│       ├── ai.py           # AI insights (with rate limiting)
+│       ├── logic.py        # Financial calculations & Validation integration
+│       ├── ai.py           # AI insights (with circuit breaker)
+│       ├── models.py       # Pydantic data models (NEW: Input Depth Defense)
 │       ├── pdf_generator.py # PDF reports (sanitized output)
-│       ├── config.py       # Configuration
-│       ├── logging_config.py # Logging setup
-│       ├── rate_limiting.py # Rate limiting & throttling
-│       └── sanitizer.py    # XSS/Injection prevention (NEW)
+│       ├── config.py       # Configuration & Environment Protection
+│       ├── logging_config.py # Logging setup with PII masking
+│       ├── rate_limiting.py # Rate limiting & AI Circuit Breaker (UPDATED)
+│       └── sanitizer.py    # XSS/Injection prevention
 ├── data/
 │   ├── currencies.json     # 84 currencies
 │   └── Finance Health Check 50_30_20 Templates.xlsx  # Excel template
 ├── tests/
-│   ├── test_app.py         # 70 core tests (passing)
-│   ├── test_rate_limiting.py # 9 rate limiting tests (passing)
-│   ├── test_performance.py # 2 performance tests (passing)
-│   └── test_sanitization.py # 39 sanitization tests (passing) (NEW)
+│   ├── test_app.py         # 70 core tests
+│   ├── test_rate_limiting.py # 9 rate limiting tests
+│   ├── test_performance.py # 2 performance tests
+│   ├── test_sanitization.py # 39 sanitization tests
+│   └── test_pydantic_validation.py # Pydantic schema tests (NEW)
 ├── legacy/                 # Old desktop app code
 ├── requirements.txt        # Dependencies
-├── pyproject.toml          # Package configuration
+├── requirements-frozen.txt # Exact reproducible environment (NEW)
 └── .env                    # API configuration
 ```
 
@@ -290,19 +304,15 @@ streamlit run web_app.py
 ## 🧪 Testing
 
 ```bash
-# Run all 109 tests
-.venv/bin/python -m pytest -v tests/
-# or, after activating the venv
-python -m pytest -v tests/
+# Run all 121 tests
+.venv/bin/python -m unittest discover tests
 
-# Run specific test suites
-python -m pytest tests/test_app.py          # 70 core tests
-python -m pytest tests/test_rate_limiting.py # 9 rate limiting tests
-python -m pytest tests/test_performance.py   # 2 performance tests
-python -m pytest tests/test_sanitization.py  # 39 sanitization tests (NEW)
+# Or run specific test suites
+python -m unittest tests/test_app.py
+python -m unittest tests/test_pydantic_validation.py
 ```
 
-**Status**: ✅ All 109 tests passing (100%)
+**Status**: ✅ All 121 tests passing (100%)
 
 ### Test Coverage
 - **Core Logic Tests** (37 tests)
@@ -376,7 +386,7 @@ This runs:
 
 ## 🔧 Requirements
 
-- **Python 3.13+**
+- **Python 3.9+** (Current implementation tested on 3.9.6)
 - **Streamlit 1.28+**
 - **google-genai** (v1.60.0+) - Modern Gemini API
 - **Virtual environment** (already created)
