@@ -12,6 +12,10 @@ import os
 from dotenv import load_dotenv
 from finance_app.logic import calculate_health_score
 from finance_app.logging_config import get_logger
+from finance_app.rate_limiting import (
+    rate_limit, exponential_backoff_async, 
+    get_rate_limiter_status, API_CALLS_PER_MINUTE
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -89,11 +93,43 @@ def _build_fallback_advice(score, income, needs, wants, savings, top_wants):
     return templates[idx]
 
 
+@exponential_backoff_async(max_retries=3, initial_backoff=1.0)
+async def _call_gemini_api(client, model, prompt):
+    """Call Gemini API with rate limiting and exponential backoff.
+    
+    Args:
+        client: Google GenAI client
+        model: Model name (e.g., 'gemini-2.5-flash')
+        prompt: Prompt string
+        
+    Returns:
+        API response
+    """
+    # Check rate limiting status
+    status = get_rate_limiter_status()
+    if status['rate_limited']:
+        logger.warning(
+            f"Rate limit active: {status['current_calls']}/{status['max_calls']} calls. "
+            f"Calls remaining: {status['calls_remaining']}"
+        )
+    
+    # Call API with timeout
+    response = await asyncio.wait_for(
+        client.aio.models.generate_content(
+            model=model,
+            contents=prompt
+        ),
+        timeout=15.0
+    )
+    return response
+
+
 async def get_ai_insights(income, needs, wants, savings, top_wants, currency='USD'):
     """Get AI advice with health score from our own logic (async).
     
     Uses our mathematical 50/30/20 formula to calculate health score.
     Calls Gemini API asynchronously for personalized financial advice.
+    Includes rate limiting and exponential backoff for reliability.
     If API is unavailable, returns sensible fallback recommendations.
 
     Args:
@@ -264,13 +300,8 @@ async def get_ai_insights(income, needs, wants, savings, top_wants, currency='US
         import asyncio
         try:
             logger.debug(f"Calling Gemini API with prompt length: {len(prompt)}")
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt
-                ),
-                timeout=15.0  # 15 second timeout to prevent indefinite hangs
-            )
+            # Use rate-limited API call with exponential backoff
+            response = await _call_gemini_api(client, 'gemini-2.5-flash', prompt)
             logger.debug("API call succeeded")
         except asyncio.TimeoutError:
             logger.warning("AI request timed out (15s); using fallback advice")

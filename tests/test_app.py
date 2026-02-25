@@ -24,6 +24,7 @@ import asyncio
 import unittest
 import os
 import sys
+import time
 from pathlib import Path
 import json
 import pandas as pd
@@ -87,6 +88,23 @@ class TestFinancialHealthChecker(unittest.TestCase):
         self.assertFalse(valid)
         self.assertIsInstance(errors, list)
         os.remove(bad_file)
+
+    def test_analysis_pipeline_completes_within_time_limit(self):
+        valid, df = validate_file(self.test_file)
+        self.assertTrue(valid)
+
+        start_time = time.perf_counter()
+        needs, wants, savings, top_wants = analyze_data(df, 1200)
+        score = calculate_health_score(1200, needs, wants, savings)
+        elapsed = time.perf_counter() - start_time
+
+        self.assertIsNotNone(top_wants)
+        self.assertIsInstance(score, int)
+        self.assertLess(
+            elapsed,
+            1.5,
+            f"Analysis pipeline exceeded time limit: {elapsed:.3f}s"
+        )
 
     def test_analyze_data(self):
         valid, df = validate_file(self.test_file)

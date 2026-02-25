@@ -8,6 +8,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from finance_app.sanitizer import sanitize_text, sanitize_category, sanitize_currency_symbol
 
 
 def clean_markdown_for_pdf(text):
@@ -220,6 +221,10 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
         score: AI health score (0-100)
         advice: AI-generated financial advice
     """
+    # Sanitize inputs to prevent injection attacks
+    symbol = sanitize_currency_symbol(symbol)
+    advice = sanitize_text(advice, max_length=5000)  # Sanitize AI advice
+    
     # Initialize PDF document with letter size
     doc = SimpleDocTemplate(path, pagesize=letter, topMargin=36, bottomMargin=36, leftMargin=42, rightMargin=42)
     styles = getSampleStyleSheet()
@@ -312,9 +317,10 @@ def generate_pdf(path, income, symbol, needs, wants, savings, top_wants, score, 
     mix = {"Needs": needs_pct, "Wants": wants_pct, "Savings": savings_pct}
     largest_label = max(mix, key=mix.get)
     largest_value = mix[largest_label]
-    # Top wants categories text
+    # Top wants categories text - SANITIZE category names to prevent injection
     top_wants_items = list(top_wants.items()) if hasattr(top_wants, 'items') else []
-    top_wants_desc = ", ".join([f"{k}: {v:,.2f}{symbol}" for k, v in top_wants_items[:3]]) if top_wants_items else "No top wants categories provided"
+    sanitized_wants = [(sanitize_category(k), v) for k, v in top_wants_items[:3]]
+    top_wants_desc = ", ".join([f"{k}: {v:,.2f}{symbol}" for k, v in sanitized_wants]) if sanitized_wants else "No top wants categories provided"
     
     # === BAR CHART SECTION ===
     story.append(Paragraph("Spending vs Targets", styles['SectionHeading']))
