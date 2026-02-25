@@ -15,25 +15,20 @@ This document explains what changed and why.
 
 ## 📊 What Was Updated
 
-### Core Code
-- ✅ Created `web_app.py` (279 lines) - Main Streamlit application
-- ✅ Updated `requirements.txt` - Added Streamlit dependencies
-- ✅ Updated `test_app.py` - Added Streamlit integration tests
+## 📁 Source Code Organization
 
-### Functions Fixed
-All function signatures corrected for proper web app integration:
-- `validate_file()` - Proper tuple unpacking
-- `analyze_data()` - Correct parameters & return values
-- `get_ai_insights()` - Fixed function name & signature
-- `generate_pdf()` - All parameters in correct order
-- `load_currencies()` - Now loads 84 currencies from JSON
+The project has been reorganized to follow modern Python packaging standards:
+
+| Path | Description |
+|--------|-------|
+| `web_app.py` | New Streamlit main entry point |
+| `src/finance_app/` | Core business logic and security modules |
+| `legacy/` | Contains the original Tkinter implementation (`app.py`, `ui.py`, `setup.py`) kept for reference |
+| `tests/` | Expanded test suite (121 tests) |
+
+```
 
 ### Legacy Files (Preserved as Reference)
-- ✅ `legacy/app.py` - Original Tkinter app (commented out)
-- ✅ `legacy/modules/ui.py` - Original GUI components (commented out)
-- ✅ `legacy/setup.py` - Original PyInstaller setup (commented out)
-
-See `LEGACY_FILES.md` for details on old code.
 
 ## 📦 Dependencies
 
